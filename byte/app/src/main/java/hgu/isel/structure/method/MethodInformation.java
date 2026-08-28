@@ -1,7 +1,10 @@
 package hgu.isel.structure.method;
 
 import hgu.isel.structure.attribute.AttributeInformation;
+import hgu.isel.structure.constant.ConstantPoolInformation;
+import hgu.isel.structure.constant.type.UTF8Information;
 
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -28,6 +31,12 @@ public class MethodInformation {
 
     public byte[] getNameIndex() {
         return nameIndex;
+    }
+
+    public String getName(ConstantPoolInformation[] constantPool) {
+        int index = ((nameIndex[0] & 0xFF) << 8) | (nameIndex[1] & 0xFF);
+        UTF8Information utf8 = (UTF8Information) constantPool[index - 1];
+        return new String(utf8.getBytes(), StandardCharsets.UTF_8);
     }
 
     public void setNameIndex(byte[] nameIndex) {
@@ -68,28 +77,39 @@ public class MethodInformation {
 
     public String toString() {
         StringBuilder stringBuilder = new StringBuilder();
+        stringBuilder.append("<Start Entry>");
+        stringBuilder.append("<Start>--- Type:").append(getClass().getSimpleName()).append("<End>\n");
 
-        stringBuilder.append("\n    Method: ");
-
+        stringBuilder.append("<Start>Access Flag:");
         for(byte b : accessFlags) {
             stringBuilder.append(String.format("%02X", b));
         }
+        stringBuilder.append("<End>\n");
 
+        stringBuilder.append("<Start>Name Index:");
         for(byte b : nameIndex) {
             stringBuilder.append(String.format("%02X", b));
         }
+        stringBuilder.append("<End>\n");
 
+        stringBuilder.append("<Start>Descriptor Index:");
         for(byte b : descriptorIndex) {
             stringBuilder.append(String.format("%02X", b));
         }
+        stringBuilder.append("<End>\n");
 
+        stringBuilder.append("<Start>Attributes Count:");
         for(byte b : attributesCount) {
             stringBuilder.append(String.format("%02X", b));
         }
+        stringBuilder.append("<End>\n");
 
+        stringBuilder.append("<Start>Attribute Information:[");
         for(AttributeInformation a : attributes) {
             stringBuilder.append(a.toString());
         }
+        stringBuilder.append("]<End>\n");
+        stringBuilder.append("<End Entry>\n");
 
         return stringBuilder.toString();
     }

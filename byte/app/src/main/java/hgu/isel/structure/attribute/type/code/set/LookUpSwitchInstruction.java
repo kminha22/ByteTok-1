@@ -1,11 +1,8 @@
 package hgu.isel.structure.attribute.type.code.set;
 
-import hgu.isel.structure.attribute.type.code.Instruction;
-import hgu.isel.structure.attribute.type.code.set.jump.JumpOffset;
+import hgu.isel.structure.attribute.type.code.AbstractInstruction;
 import hgu.isel.structure.attribute.type.code.set.match.MatchOffsetPair;
 
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * This class supports the structure of the JVM bytecodes.
@@ -13,125 +10,20 @@ import java.util.List;
  * <p>
  * All getters and setters in this class are simple property accessors with no side effects.
  */
-public class LookUpSwitchInstruction implements Instruction {
+public class LookUpSwitchInstruction extends AbstractInstruction {
     private byte format;
-    private byte[] paddingByte; // 0x00으로 채워짐
+    private byte[] padding; // 0x00으로 채워짐
     // format이 4바이트 경계에 위치하도록 해야함
-    private byte[] defaultBytes;
-    private byte[] nPairs;
-    private MatchOffsetPair[] matchOffsetPairs; // nPairs의 수에 따라 offset pairs의 수가 결정됨
+    private byte[] default_jump_offset;
+    private byte[] immediate_value_paircount;
+    private MatchOffsetPair[] jump_offset_pairs; // nPairs의 수에 따라 offset pairs의 수가 결정됨
 
     public LookUpSwitchInstruction(byte format, byte[] paddingByte, byte[] defaultBytes, byte[] nPairs, MatchOffsetPair[] matchOffsetPairs) {
         this.format = format;
-        this.paddingByte = paddingByte;
-        this.defaultBytes = defaultBytes;
-        this.nPairs = nPairs;
-        this.matchOffsetPairs = matchOffsetPairs;
+        this.padding = paddingByte;
+        this.default_jump_offset = defaultBytes;
+        this.immediate_value_paircount = nPairs;
+        this.jump_offset_pairs = matchOffsetPairs;
     }
 
-    public byte getFormat() {
-        return format;
-    }
-
-    public void setFormat(byte format) {
-        this.format = format;
-    }
-
-    public byte[] getPaddingByte() {
-        return paddingByte;
-    }
-
-    public void setPaddingByte(byte[] paddingByte) {
-        this.paddingByte = paddingByte;
-    }
-
-    public byte[] getDefaultBytes() {
-        return defaultBytes;
-    }
-
-    public void setDefaultBytes(byte[] defaultBytes) {
-        this.defaultBytes = defaultBytes;
-    }
-
-    public byte[] getnPairs() {
-        return nPairs;
-    }
-
-    public void setnPairs(byte[] nPairs) {
-        this.nPairs = nPairs;
-    }
-
-    public MatchOffsetPair[] getMatchOffsetPairs() {
-        return matchOffsetPairs;
-    }
-
-    public void setMatchOffsetPairs(MatchOffsetPair[] matchOffsetPairs) {
-        this.matchOffsetPairs = matchOffsetPairs;
-    }
-    public String toString() {
-        StringBuilder stringBuilder = new StringBuilder();
-
-        stringBuilder.append("\n             - lookupswitch instruction: ");
-
-        stringBuilder.append(String.format("%02X", format));
-
-        for(byte b : paddingByte) {
-            stringBuilder.append(String.format("%02X", b));
-        }
-
-        for(byte b : defaultBytes) {
-            stringBuilder.append(String.format("%02X", b));
-        }
-
-        for(byte b : nPairs) {
-            stringBuilder.append(String.format("%02X", b));
-        }
-
-
-        for(MatchOffsetPair b : matchOffsetPairs) {
-            stringBuilder.append(b.toString());
-        }
-
-        return stringBuilder.toString();
-    }
-
-    @Override
-    public List<String> tokenize() {
-        List<String> output = new ArrayList<>();
-
-
-        StringBuilder stringBuilder = new StringBuilder();
-        // output.add("[Lookup Switch Instruction]");
-        stringBuilder.append(String.format("%02X", format));
-        for(byte b : paddingByte) {
-            stringBuilder.append(String.format("%02X", b));
-        }
-        output.add(stringBuilder.toString());
-        stringBuilder.setLength(0);
-
-        // output.add("[Lookup Switch Default Bytes]");
-        for(byte b : defaultBytes) {
-            stringBuilder.append(String.format("%02X", b));
-        }
-
-        output.add(stringBuilder.toString());
-        stringBuilder.setLength(0);
-
-        // output.add("[Lookup Switch N Pairs]");
-
-        for(byte b : nPairs) {
-            stringBuilder.append(String.format("%02X", b));
-        }
-
-        output.add(stringBuilder.toString());
-        stringBuilder.setLength(0);
-
-
-        for(MatchOffsetPair m : matchOffsetPairs) {
-            output.addAll(m.tokenize());
-        }
-
-
-        return output;
-    }
 }

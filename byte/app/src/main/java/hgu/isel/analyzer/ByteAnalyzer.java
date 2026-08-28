@@ -101,89 +101,103 @@ public class ByteAnalyzer {
     public String printResult() {
         StringBuilder stringBuilder = new StringBuilder();
 
-        stringBuilder.append("Magic Number: ");
+        stringBuilder.append("<Start>Magic Number:");
         for(byte b : magic) {
             stringBuilder.append(String.format("%02X", b));
         }
+        stringBuilder.append("<End>\n");
 
-        stringBuilder.append("\nMinor Version: ");
+        stringBuilder.append("<Start>Minor Version:");
         for(byte b : minorVersion) {
             stringBuilder.append(String.format("%02X", b));
         }
+        stringBuilder.append("<End>\n");
 
-        stringBuilder.append("\nMajor Version: ");
+        stringBuilder.append("<Start>Major Version:");
         for(byte b : majorVersion) {
             stringBuilder.append(String.format("%02X", b));
         }
+        stringBuilder.append("<End>\n");
 
-        stringBuilder.append("\nConstant Pool Count: ");
+        stringBuilder.append("<Start>Constant Pool Count:");
         for(byte b : constantPoolCount) {
             stringBuilder.append(String.format("%02X", b));
         }
+        stringBuilder.append("<End>\n");
 
-
-        stringBuilder.append("\nConstant Pool: ");
+        stringBuilder.append("<Start>Constant Pool:[");
         for(ConstantPoolInformation c : constantPoolInformation) {
             if(c != null) {
-                stringBuilder.append(c.toString());
+                stringBuilder.append(c.toCustomString());
             }
         }
+        stringBuilder.append("]<End>\n");
 
-
-        stringBuilder.append("\nAccess Flag: ");
+        stringBuilder.append("<Start>Access Flag:");
         for(byte b : accessFlag) {
             stringBuilder.append(String.format("%02X", b));
         }
+        stringBuilder.append("<End>\n");
 
-        stringBuilder.append("\nThis Class: ");
+        stringBuilder.append("<Start>This Class:");
         for(byte b : thisClass) {
             stringBuilder.append(String.format("%02X", b));
         }
+        stringBuilder.append("<End>\n");
 
-        stringBuilder.append("\nSuper Class: ");
+        stringBuilder.append("<Start>Super Class:");
         for(byte b : superClass) {
             stringBuilder.append(String.format("%02X", b));
         }
+        stringBuilder.append("<End>\n");
 
-        stringBuilder.append("\nInterface Count: ");
+        stringBuilder.append("<Start>Interface Count:");
         for(byte b : interfacesCount) {
             stringBuilder.append(String.format("%02X", b));
         }
+        stringBuilder.append("<End>\n");
 
-        stringBuilder.append("\nInterfaces: ");
+        stringBuilder.append("<Start>Interfaces:[");
         for(Interfaces i : interfaces) {
             stringBuilder.append(i.toString());
         }
+        stringBuilder.append("]<End>\n");
 
-        stringBuilder.append("\nFields Count: ");
+        stringBuilder.append("<Start>Fields Count:");
         for(byte b : fieldsCount) {
             stringBuilder.append(String.format("%02X", b));
         }
+        stringBuilder.append("<End>\n");
 
-        stringBuilder.append("\nFields: ");
+        stringBuilder.append("<Start>Fields:[");
         for(FieldInformation f : fieldInformation) {
             stringBuilder.append(f.toString());
         }
+        stringBuilder.append("]<End>\n");
 
-        stringBuilder.append("\nMethods Count: ");
+        stringBuilder.append("<Start>Methods Count:");
         for(byte b : methodsCount) {
             stringBuilder.append(String.format("%02X", b));
         }
+        stringBuilder.append("<End>\n");
 
-        stringBuilder.append("\nMethods: ");
+        stringBuilder.append("<Start>Methods:[");
         for(MethodInformation m : methodInformation) {
             stringBuilder.append(m.toString());
         }
+        stringBuilder.append("]<End>\n");
 
-        stringBuilder.append("\nAttributes Count: ");
+        stringBuilder.append("<Start>Attributes Count:");
         for(byte b : attributesCount) {
             stringBuilder.append(String.format("%02X", b));
         }
+        stringBuilder.append("<End>\n");
 
-        stringBuilder.append("\nAttributes: ");
+        stringBuilder.append("<Start>Attributes:[");
         for(AttributeInformation a : attributeInformation) {
             stringBuilder.append(a.toString());
         }
+        stringBuilder.append("]<End>\n");
 
         return stringBuilder.toString();
 
@@ -398,7 +412,7 @@ public class ByteAnalyzer {
                 offset += 3;
                 break;
             default:
-                throw new Exception("Constant pool Error");
+                throw new Exception(String.format("Constant pool Error - Offset: %d, Invalid Tag: %d", offset, tag));
         }
 
         return returnInformation;
@@ -609,6 +623,7 @@ public class ByteAnalyzer {
         return returnInformation;
     }
 
+
     /**
      * This method get a name of each attribute.
      * By using the name of attribute, it parses the bytecode attributes. For example, if the name is ConstantValue, then this method will increase offset + 2
@@ -616,719 +631,766 @@ public class ByteAnalyzer {
      * @throws UnsupportedEncodingException It is possible to find out customized attribute, so the UnsupportedEncodingException can be occurred.
      */
     public AttributeInformation createAttribute() throws UnsupportedEncodingException {
+        int startOffset = offset;
 
         AttributeInformation returnInformation;
+        // 범위 체크: offset이 bytes 범위 안에 있는지
+        if (offset + 1 >= bytes.length) {
+            throw new RuntimeException("Offset out of range: offset=" + offset + " / bytes.length=" + bytes.length);
+        }
+
+        int before = offset;
         int utf8Index = ((bytes[offset] & 0xFF) << 8) | (bytes[offset + 1] & 0xFF);
+
         UTF8Information utf8Information = (UTF8Information) constantPoolInformation[utf8Index - 1];
-
-
         byte[] attributeName = utf8Information.getBytes();
+
         byte[] attributeNameIndex = Arrays.copyOfRange(bytes, offset, offset + 2);
         byte[] attributeLength = Arrays.copyOfRange(bytes, offset + 2, offset + 6);
         offset += 6;
 
-        if(Arrays.equals(attributeName, "ConstantValue".getBytes("UTF-8"))) {
-            byte[] constantValueIndex = Arrays.copyOfRange(bytes, offset, offset + 2);
 
-            returnInformation = new ConstantValue(attributeNameIndex, attributeLength, constantValueIndex);
-            offset += 2;
+        try {
 
-        } else if(Arrays.equals(attributeName, "Code".getBytes("UTF-8"))) {
-            byte[] maxStack = Arrays.copyOfRange(bytes, offset, offset + 2);
-            offset += 2;
+            if(Arrays.equals(attributeName, "ConstantValue".getBytes("UTF-8"))) {
+                byte[] constantValueIndex = Arrays.copyOfRange(bytes, offset, offset + 2);
 
-            byte[] maxLocals = Arrays.copyOfRange(bytes, offset, offset + 2);
-            offset += 2;
-
-            byte[] codeLength = Arrays.copyOfRange(bytes, offset, offset + 4);
-            offset += 4;
-
-            int lengthInteger = ((codeLength[0] & 0xFF) << 24) | ((codeLength[1] & 0xFF) << 16) | ((codeLength[2] & 0xFF) << 8) | (codeLength[3] & 0xFF);
-
-            int totalOffset = offset;
-
-            byte[] code = Arrays.copyOfRange(bytes, offset, offset + lengthInteger);
-            offset += lengthInteger;
-
-            byte[] exceptionTableLength = Arrays.copyOfRange(bytes, offset, offset + 2);
-            offset += 2;
-
-            int exceptionTableLengthInteger = ((exceptionTableLength[0] & 0xFF) << 8) | (exceptionTableLength[1] & 0xFF);
-            ExceptionTable[] exceptionTables = new ExceptionTable[exceptionTableLengthInteger];
-
-            int exceptionCount = 0;
-            while(exceptionCount < exceptionTableLengthInteger) {
-                byte[] startPC = Arrays.copyOfRange(bytes, offset, offset + 2);
+                returnInformation = new ConstantValue(attributeNameIndex, attributeLength, constantValueIndex);
                 offset += 2;
 
-                byte[] endPC = Arrays.copyOfRange(bytes, offset, offset + 2);
+            } else if(Arrays.equals(attributeName, "Code".getBytes("UTF-8"))) {
+                byte[] maxStack = Arrays.copyOfRange(bytes, offset, offset + 2);
                 offset += 2;
 
-                byte[] handlerPC = Arrays.copyOfRange(bytes, offset, offset + 2);
+                byte[] maxLocals = Arrays.copyOfRange(bytes, offset, offset + 2);
                 offset += 2;
 
-                byte[] catchType = Arrays.copyOfRange(bytes, offset, offset + 2);
+                byte[] codeLength = Arrays.copyOfRange(bytes, offset, offset + 4);
+                offset += 4;
+
+                int lengthInteger = ((codeLength[0] & 0xFF) << 24) | ((codeLength[1] & 0xFF) << 16) | ((codeLength[2] & 0xFF) << 8) | (codeLength[3] & 0xFF);
+
+                int totalOffset = offset;
+
+                byte[] code = Arrays.copyOfRange(bytes, offset, offset + lengthInteger);
+                offset += lengthInteger;
+
+                byte[] exceptionTableLength = Arrays.copyOfRange(bytes, offset, offset + 2);
                 offset += 2;
 
-                exceptionTables[exceptionCount] = new ExceptionTable(startPC, endPC, handlerPC, catchType);
-                exceptionCount++;
-            }
+                int exceptionTableLengthInteger = ((exceptionTableLength[0] & 0xFF) << 8) | (exceptionTableLength[1] & 0xFF);
+                ExceptionTable[] exceptionTables = new ExceptionTable[exceptionTableLengthInteger];
 
-            byte[] attributesCount = Arrays.copyOfRange(bytes, offset, offset + 2);
-            int attributesCountInteger = ((attributesCount[0] & 0xFF) << 8) | (attributesCount[1] & 0xFF);
-            offset += 2;
-
-            AttributeInformation[] attributes = analyzeAttribute(attributesCountInteger);
-
-            returnInformation = new Code(attributeNameIndex, attributeLength, maxStack, maxLocals, codeLength, code, exceptionTableLength, exceptionTables, attributesCount, attributes, totalOffset);
-
-        } else if(Arrays.equals(attributeName, "StackMapTable".getBytes("UTF-8"))) {
-            byte[] numberOfEntries = Arrays.copyOfRange(bytes, offset, offset + 2);
-            offset += 2;
-
-            int numberOfEntriesInteger = ((numberOfEntries[0] & 0xFF) << 8) | (numberOfEntries[1] & 0xFF);
-
-            StackMapFrame[] stackMapFrames = new StackMapFrame[numberOfEntriesInteger];
-            int count = 0;
-
-            while(count < numberOfEntriesInteger) {
-                byte frame = bytes[offset];
-                int frameType = bytes[offset] & 0xFF;
-                offset += 1;
-
-                if(frameType < 64) {
-                    stackMapFrames[count] = new SameFrame(frame);
-
-                } else if(frameType >= 64 && frameType < 128) {
-                    VerificationTypeInformation verificationTypeInformation = analyzeVerificationTypeInformation();
-                    stackMapFrames[count] = new SameLocals1StackItemFrame(frame, verificationTypeInformation);
-
-                } else if(frameType == 247) {
-                    byte[] offsetDelta = Arrays.copyOfRange(bytes, offset, offset + 2);
-                    offset += 2;
-                    VerificationTypeInformation verificationTypeInformation = analyzeVerificationTypeInformation();
-                    stackMapFrames[count] = new SameLocals1StackItemFrameExtended(frame, offsetDelta, verificationTypeInformation);
-
-                } else if(frameType >= 248 && frameType <= 250) {
-                    byte[] offsetDelta = Arrays.copyOfRange(bytes, offset, offset + 2);
+                int exceptionCount = 0;
+                while(exceptionCount < exceptionTableLengthInteger) {
+                    byte[] startPC = Arrays.copyOfRange(bytes, offset, offset + 2);
                     offset += 2;
 
-                    stackMapFrames[count] = new ChopFrame(frame, offsetDelta);
-
-                } else if(frameType == 251) {
-                    byte[] offsetDelta = Arrays.copyOfRange(bytes, offset, offset + 2);
+                    byte[] endPC = Arrays.copyOfRange(bytes, offset, offset + 2);
                     offset += 2;
 
-                    stackMapFrames[count] = new SameFrameExtended(frame, offsetDelta);
-
-                } else if(frameType >= 252 && frameType <= 254) {
-                    int numberOfVerifications = frameType - 251;
-
-                    byte[] offsetDelta = Arrays.copyOfRange(bytes, offset, offset + 2);
+                    byte[] handlerPC = Arrays.copyOfRange(bytes, offset, offset + 2);
                     offset += 2;
 
-                    VerificationTypeInformation[] verificationTypeInformation = new VerificationTypeInformation[numberOfVerifications];
-                    int loop = 0;
-
-                    while(loop < numberOfVerifications) {
-                        verificationTypeInformation[loop] = analyzeVerificationTypeInformation();
-
-                        loop++;
-                    }
-
-                    stackMapFrames[count] = new AppendedFrame(frame, offsetDelta, verificationTypeInformation);
-
-                } else if(frameType == 255) {
-                    byte[] offsetDelta = Arrays.copyOfRange(bytes, offset, offset + 2);
+                    byte[] catchType = Arrays.copyOfRange(bytes, offset, offset + 2);
                     offset += 2;
 
-                    byte[] numberOfLocals = Arrays.copyOfRange(bytes, offset, offset + 2);
-                    offset += 2;
-
-                    int numberOfLocalsInteger = ((numberOfLocals[0] & 0xFF) << 8) | (numberOfLocals[1] & 0xFF);
-                    VerificationTypeInformation[] locals = new VerificationTypeInformation[numberOfLocalsInteger];
-                    int loop = 0;
-
-                    while(loop < numberOfLocalsInteger) {
-                        locals[loop] = analyzeVerificationTypeInformation();
-
-                        loop++;
-                    }
-
-                    loop = 0;
-
-                    byte[] numberOfStackItems = Arrays.copyOfRange(bytes, offset, offset + 2);
-                    offset += 2;
-                    int numberOfStackItemsInteger = ((numberOfStackItems[0] & 0xFF) << 8) | (numberOfStackItems[1] & 0xFF);
-                    VerificationTypeInformation[] stack = new VerificationTypeInformation[numberOfStackItemsInteger];
-
-                    while(loop < numberOfStackItemsInteger) {
-                        stack[loop] = analyzeVerificationTypeInformation();
-
-                        loop++;
-                    }
-
-                    stackMapFrames[count] = new FullFrame(frame, offsetDelta, numberOfLocals, locals, numberOfStackItems, stack);
-
+                    exceptionTables[exceptionCount] = new ExceptionTable(startPC, endPC, handlerPC, catchType);
+                    exceptionCount++;
                 }
-                count++;
-            }
-            returnInformation = new StackMapTable(attributeNameIndex, attributeLength, numberOfEntries, stackMapFrames);
 
-        } else if(Arrays.equals(attributeName, "Exceptions".getBytes("UTF-8"))) {
-            byte[] numberOfExceptions = Arrays.copyOfRange(bytes, offset, offset + 2);
-            int numberOfExceptionsInteger = ((numberOfExceptions[0] & 0xFF) << 8) | (numberOfExceptions[1] & 0xFF);
-            offset += 2;
-
-            ExceptionIndexTable[] exceptionIndexTables = new ExceptionIndexTable[numberOfExceptionsInteger];
-            int count = 0;
-
-            while(count < numberOfExceptionsInteger) {
-                exceptionIndexTables[count] = new ExceptionIndexTable(Arrays.copyOfRange(bytes, offset, offset + 2));
+                byte[] attributesCount = Arrays.copyOfRange(bytes, offset, offset + 2);
+                int attributesCountInteger = ((attributesCount[0] & 0xFF) << 8) | (attributesCount[1] & 0xFF);
                 offset += 2;
 
-                count++;
-            }
+                AttributeInformation[] attributes = analyzeAttribute(attributesCountInteger);
 
-            returnInformation = new Exceptions(attributeNameIndex, attributeLength, numberOfExceptions, exceptionIndexTables);
-        } else if(Arrays.equals(attributeName, "InnerClasses".getBytes("UTF-8"))) {
-            byte[] numberOfClasses = Arrays.copyOfRange(bytes, offset, offset + 2);
-            int numberOfClassesInteger = ((numberOfClasses[0] & 0xFF) << 8) | (numberOfClasses[1] & 0xFF);
-            offset += 2;
+                returnInformation = new Code(attributeNameIndex, attributeLength, maxStack, maxLocals, codeLength, code, exceptionTableLength, exceptionTables, attributesCount, attributes, totalOffset);
 
-            InnerClassInformation[] innerClasses = new InnerClassInformation[numberOfClassesInteger];
-            int count = 0;
-
-            while(count < numberOfClassesInteger) {
-                byte[] innerClassInfoIndex = Arrays.copyOfRange(bytes, offset, offset + 2);
+            } else if(Arrays.equals(attributeName, "StackMapTable".getBytes("UTF-8"))) {
+                byte[] numberOfEntries = Arrays.copyOfRange(bytes, offset, offset + 2);
                 offset += 2;
 
-                byte[] outerClassInfoIndex = Arrays.copyOfRange(bytes, offset, offset + 2);
+                int numberOfEntriesInteger = ((numberOfEntries[0] & 0xFF) << 8) | (numberOfEntries[1] & 0xFF);
+
+                StackMapFrame[] stackMapFrames = new StackMapFrame[numberOfEntriesInteger];
+                int count = 0;
+
+                while(count < numberOfEntriesInteger) {
+                    byte frame = bytes[offset];
+                    int frameType = bytes[offset] & 0xFF;
+                    offset += 1;
+
+                    if(frameType < 64) {
+                        stackMapFrames[count] = new SameFrame(frame);
+
+                    } else if(frameType >= 64 && frameType < 128) {
+                        VerificationTypeInformation verificationTypeInformation = analyzeVerificationTypeInformation();
+                        stackMapFrames[count] = new SameLocals1StackItemFrame(frame, verificationTypeInformation);
+
+                    } else if(frameType == 247) {
+                        byte[] offsetDelta = Arrays.copyOfRange(bytes, offset, offset + 2);
+                        offset += 2;
+                        VerificationTypeInformation verificationTypeInformation = analyzeVerificationTypeInformation();
+                        stackMapFrames[count] = new SameLocals1StackItemFrameExtended(frame, offsetDelta, verificationTypeInformation);
+
+                    } else if(frameType >= 248 && frameType <= 250) {
+                        byte[] offsetDelta = Arrays.copyOfRange(bytes, offset, offset + 2);
+                        offset += 2;
+
+                        stackMapFrames[count] = new ChopFrame(frame, offsetDelta);
+
+                    } else if(frameType == 251) {
+                        byte[] offsetDelta = Arrays.copyOfRange(bytes, offset, offset + 2);
+                        offset += 2;
+
+                        stackMapFrames[count] = new SameFrameExtended(frame, offsetDelta);
+
+                    } else if(frameType >= 252 && frameType <= 254) {
+                        int numberOfVerifications = frameType - 251;
+
+                        byte[] offsetDelta = Arrays.copyOfRange(bytes, offset, offset + 2);
+                        offset += 2;
+
+                        VerificationTypeInformation[] verificationTypeInformation = new VerificationTypeInformation[numberOfVerifications];
+                        int loop = 0;
+
+                        while(loop < numberOfVerifications) {
+                            verificationTypeInformation[loop] = analyzeVerificationTypeInformation();
+
+                            loop++;
+                        }
+
+                        stackMapFrames[count] = new AppendedFrame(frame, offsetDelta, verificationTypeInformation);
+
+                    } else if(frameType == 255) {
+                        byte[] offsetDelta = Arrays.copyOfRange(bytes, offset, offset + 2);
+                        offset += 2;
+
+                        byte[] numberOfLocals = Arrays.copyOfRange(bytes, offset, offset + 2);
+                        offset += 2;
+
+                        int numberOfLocalsInteger = ((numberOfLocals[0] & 0xFF) << 8) | (numberOfLocals[1] & 0xFF);
+                        VerificationTypeInformation[] locals = new VerificationTypeInformation[numberOfLocalsInteger];
+                        int loop = 0;
+
+                        while(loop < numberOfLocalsInteger) {
+                            locals[loop] = analyzeVerificationTypeInformation();
+
+                            loop++;
+                        }
+
+                        loop = 0;
+
+                        byte[] numberOfStackItems = Arrays.copyOfRange(bytes, offset, offset + 2);
+                        offset += 2;
+                        int numberOfStackItemsInteger = ((numberOfStackItems[0] & 0xFF) << 8) | (numberOfStackItems[1] & 0xFF);
+                        VerificationTypeInformation[] stack = new VerificationTypeInformation[numberOfStackItemsInteger];
+
+                        while(loop < numberOfStackItemsInteger) {
+                            stack[loop] = analyzeVerificationTypeInformation();
+
+                            loop++;
+                        }
+
+                        stackMapFrames[count] = new FullFrame(frame, offsetDelta, numberOfLocals, locals, numberOfStackItems, stack);
+
+                    }
+                    count++;
+                }
+                returnInformation = new StackMapTable(attributeNameIndex, attributeLength, numberOfEntries, stackMapFrames);
+
+            } else if(Arrays.equals(attributeName, "Exceptions".getBytes("UTF-8"))) {
+                byte[] numberOfExceptions = Arrays.copyOfRange(bytes, offset, offset + 2);
+                int numberOfExceptionsInteger = ((numberOfExceptions[0] & 0xFF) << 8) | (numberOfExceptions[1] & 0xFF);
                 offset += 2;
 
-                byte[] innerNameIndex = Arrays.copyOfRange(bytes, offset, offset + 2);
+                ExceptionIndexTable[] exceptionIndexTables = new ExceptionIndexTable[numberOfExceptionsInteger];
+                int count = 0;
+
+                while(count < numberOfExceptionsInteger) {
+                    exceptionIndexTables[count] = new ExceptionIndexTable(Arrays.copyOfRange(bytes, offset, offset + 2));
+                    offset += 2;
+
+                    count++;
+                }
+
+                returnInformation = new Exceptions(attributeNameIndex, attributeLength, numberOfExceptions, exceptionIndexTables);
+            } else if(Arrays.equals(attributeName, "InnerClasses".getBytes("UTF-8"))) {
+                byte[] numberOfClasses = Arrays.copyOfRange(bytes, offset, offset + 2);
+                int numberOfClassesInteger = ((numberOfClasses[0] & 0xFF) << 8) | (numberOfClasses[1] & 0xFF);
                 offset += 2;
 
-                byte[] innerClassAccessFlag = Arrays.copyOfRange(bytes, offset, offset + 2);
+                InnerClassInformation[] innerClasses = new InnerClassInformation[numberOfClassesInteger];
+                int count = 0;
+
+                while(count < numberOfClassesInteger) {
+                    byte[] innerClassInfoIndex = Arrays.copyOfRange(bytes, offset, offset + 2);
+                    offset += 2;
+
+                    byte[] outerClassInfoIndex = Arrays.copyOfRange(bytes, offset, offset + 2);
+                    offset += 2;
+
+                    byte[] innerNameIndex = Arrays.copyOfRange(bytes, offset, offset + 2);
+                    offset += 2;
+
+                    byte[] innerClassAccessFlag = Arrays.copyOfRange(bytes, offset, offset + 2);
+                    offset += 2;
+
+                    innerClasses[count] = new InnerClassInformation(innerClassInfoIndex, outerClassInfoIndex, innerNameIndex, innerClassAccessFlag);
+
+                    count++;
+                }
+
+                returnInformation = new InnerClasses(attributeNameIndex, attributeLength, numberOfClasses, innerClasses);
+
+            } else if(Arrays.equals(attributeName, "EnclosingMethod".getBytes("UTF-8"))) {
+                byte[] classIndex = Arrays.copyOfRange(bytes, offset, offset + 2);
                 offset += 2;
 
-                innerClasses[count] = new InnerClassInformation(innerClassInfoIndex, outerClassInfoIndex, innerNameIndex, innerClassAccessFlag);
-
-                count++;
-            }
-
-            returnInformation = new InnerClasses(attributeNameIndex, attributeLength, numberOfClasses, innerClasses);
-
-        } else if(Arrays.equals(attributeName, "EnclosingMethod".getBytes("UTF-8"))) {
-            byte[] classIndex = Arrays.copyOfRange(bytes, offset, offset + 2);
-            offset += 2;
-
-            byte[] methodIndex = Arrays.copyOfRange(bytes, offset, offset + 2);
-            offset += 2;
-
-            returnInformation = new EnclosingMethod(attributeNameIndex, attributeLength, classIndex, methodIndex);
-
-        } else if(Arrays.equals(attributeName, "Synthetic".getBytes("UTF-8"))) {
-            returnInformation = new Synthetic(attributeNameIndex, attributeLength);
-
-        } else if(Arrays.equals(attributeName, "Signature".getBytes("UTF-8"))) {
-            byte[] signatureIndex = Arrays.copyOfRange(bytes, offset, offset + 2);
-            offset += 2;
-
-            returnInformation = new Signature(attributeNameIndex, attributeLength, signatureIndex);
-
-        } else if(Arrays.equals(attributeName, "SourceFile".getBytes("UTF-8"))) {
-            byte[] sourceFileIndex = Arrays.copyOfRange(bytes, offset, offset + 2);
-            offset += 2;
-
-            returnInformation = new SourceFile(attributeNameIndex, attributeLength, sourceFileIndex);
-
-        } else if(Arrays.equals(attributeName, "SourceDebugExtension".getBytes("UTF-8"))) {
-            int length = ((attributeLength[0] & 0xFF) << 8) | (attributeLength[1] & 0xFF);
-            byte[] debugExtension = Arrays.copyOfRange(bytes, offset, offset + length);
-            offset += length;
-
-            returnInformation = new SourceDebugExtension(attributeNameIndex, attributeLength, debugExtension);
-
-        } else if(Arrays.equals(attributeName, "LineNumberTable".getBytes("UTF-8"))) {
-            byte[] lineNumberTableLength = Arrays.copyOfRange(bytes, offset, offset + 2);
-            offset += 2;
-
-            int length = ((lineNumberTableLength[0] & 0xFF) << 8) | (lineNumberTableLength[1] & 0xFF);
-            int count = 0;
-
-            LineNumberTableInformation[] information = new LineNumberTableInformation[length];
-
-            while(count < length) {
-                byte[] startPC = Arrays.copyOfRange(bytes, offset, offset + 2);
+                byte[] methodIndex = Arrays.copyOfRange(bytes, offset, offset + 2);
                 offset += 2;
 
-                byte[] lineNumber = Arrays.copyOfRange(bytes, offset, offset + 2);
-                offset += 2;
+                returnInformation = new EnclosingMethod(attributeNameIndex, attributeLength, classIndex, methodIndex);
 
-                information[count] = new LineNumberTableInformation(startPC, lineNumber);
+            } else if(Arrays.equals(attributeName, "Synthetic".getBytes("UTF-8"))) {
+                returnInformation = new Synthetic(attributeNameIndex, attributeLength);
 
-                count++;
-            }
-
-            returnInformation = new LineNumberTable(attributeNameIndex, attributeLength, lineNumberTableLength, information);
-
-        } else if(Arrays.equals(attributeName, "LocalVariableTable".getBytes("UTF-8"))) {
-            byte[] localVariableTableLength = Arrays.copyOfRange(bytes, offset, offset + 2);
-            offset += 2;
-
-            int localVariableTableLengthInteger = ((localVariableTableLength[0] & 0xFF) << 8) | (localVariableTableLength[1] & 0xFF);
-            int count = 0;
-            LocalVariableTableInformation[] localVariableTableInformation = new LocalVariableTableInformation[localVariableTableLengthInteger];
-
-            while(count < localVariableTableLengthInteger) {
-                byte[] startPC = Arrays.copyOfRange(bytes, offset, offset + 2);
-                offset += 2;
-
-                byte[] length = Arrays.copyOfRange(bytes, offset, offset + 2);
-                offset += 2;
-
-                byte[] nameIndex = Arrays.copyOfRange(bytes, offset, offset + 2);
-                offset += 2;
-
-                byte[] descriptorIndex = Arrays.copyOfRange(bytes, offset, offset + 2);
-                offset += 2;
-
-                byte[] index = Arrays.copyOfRange(bytes, offset, offset + 2);
-                offset += 2;
-
-                localVariableTableInformation[count] = new LocalVariableTableInformation(startPC, length, nameIndex, descriptorIndex, index);
-
-                count++;
-            }
-
-            returnInformation = new LocalVariableTable(attributeNameIndex, attributeLength, localVariableTableLength, localVariableTableInformation);
-
-        } else if(Arrays.equals(attributeName, "LocalVariableTypeTable".getBytes("UTF-8"))) {
-            byte[] localVariableTypeTableLength = Arrays.copyOfRange(bytes, offset, offset + 2);
-            offset += 2;
-
-            int localVariableTypeTableLengthInteger = ((localVariableTypeTableLength[0] & 0xFF) << 8) | (localVariableTypeTableLength[1] & 0xFF);
-            int count = 0;
-
-            LocalVariableTypeTableInformation[] localVariableTypeTableInformation = new LocalVariableTypeTableInformation[localVariableTypeTableLengthInteger];
-
-            while(count < localVariableTypeTableLengthInteger) {
-                byte[] startPC = Arrays.copyOfRange(bytes, offset, offset + 2);
-                offset += 2;
-
-                byte[] length = Arrays.copyOfRange(bytes, offset, offset + 2);
-                offset += 2;
-
-                byte[] nameIndex = Arrays.copyOfRange(bytes, offset, offset + 2);
-                offset += 2;
-
+            } else if(Arrays.equals(attributeName, "Signature".getBytes("UTF-8"))) {
                 byte[] signatureIndex = Arrays.copyOfRange(bytes, offset, offset + 2);
                 offset += 2;
 
-                byte[] index = Arrays.copyOfRange(bytes, offset, offset + 2);
+                returnInformation = new Signature(attributeNameIndex, attributeLength, signatureIndex);
+
+            } else if(Arrays.equals(attributeName, "SourceFile".getBytes("UTF-8"))) {
+                byte[] sourceFileIndex = Arrays.copyOfRange(bytes, offset, offset + 2);
                 offset += 2;
 
-                localVariableTypeTableInformation[count] = new LocalVariableTypeTableInformation(startPC, length, nameIndex, signatureIndex, index);
+                returnInformation = new SourceFile(attributeNameIndex, attributeLength, sourceFileIndex);
 
-                count++;
-            }
+            }else if (Arrays.equals(attributeName, "SourceDebugExtension".getBytes(StandardCharsets.UTF_8))) {
+                // attributeLength는 항상 4바이트 정수
+                int length1 = ((attributeLength[0] & 0xFF) << 24) |
+                            ((attributeLength[1] & 0xFF) << 16) |
+                            ((attributeLength[2] & 0xFF) << 8) |
+                            (attributeLength[3] & 0xFF);
 
-            returnInformation = new LocalVariableTypeTable(attributeNameIndex, attributeLength, localVariableTypeTableLength, localVariableTypeTableInformation);
+                // 범위 체크
+                if (offset + length1 > bytes.length) {
+                    System.err.println("SourceDebugExtension length out of range: " + length1
+                        + " at offset=" + offset + " / bytes.length=" + bytes.length);
+                    length1 = bytes.length - offset; // 안전하게 잘라내기
+                }
 
-        } else if(Arrays.equals(attributeName, "Deprecated".getBytes("UTF-8"))) {
-            returnInformation = new Deprecated(attributeNameIndex, attributeLength);
+                // 본문 읽기
+                byte[] debugExtension = Arrays.copyOfRange(bytes, offset, offset + length1);
 
-        } else if(Arrays.equals(attributeName, "RuntimeVisibleAnnotations".getBytes("UTF-8"))) {
-            byte[] numberOfAnnotations = Arrays.copyOfRange(bytes, offset, offset + 2);
-            offset += 2;
-            int numberOfAnnotationsInteger = ((numberOfAnnotations[0] & 0xFF) << 8) | (numberOfAnnotations[1] & 0xFF);
+                // offset 갱신
+                offset += length1;
 
-            Annotation[] annotations = analyzeAnnotations(numberOfAnnotationsInteger);
-            returnInformation = new RuntimeVisibleAnnotations(attributeNameIndex, attributeLength, numberOfAnnotations, annotations);
+                // 결과 객체 생성
+                returnInformation = new SourceDebugExtension(attributeNameIndex, attributeLength, debugExtension);
+            } else if(Arrays.equals(attributeName, "LineNumberTable".getBytes("UTF-8"))) {
+                byte[] lineNumberTableLength = Arrays.copyOfRange(bytes, offset, offset + 2);
+                offset += 2;
 
-        } else if(Arrays.equals(attributeName, "RuntimeInvisibleAnnotations".getBytes("UTF-8"))) {
-            byte[] numberOfAnnotations = Arrays.copyOfRange(bytes, offset, offset + 2);
-            offset += 2;
-            int numberOfAnnotationsInteger = ((numberOfAnnotations[0] & 0xFF) << 8) | (numberOfAnnotations[1] & 0xFF);
+                int length2 = ((lineNumberTableLength[0] & 0xFF) << 8) | (lineNumberTableLength[1] & 0xFF);
+                int count = 0;
 
-            Annotation[] annotations = analyzeAnnotations(numberOfAnnotationsInteger);
-            returnInformation = new RuntimeInvisibleAnnotations(attributeNameIndex, attributeLength, numberOfAnnotations, annotations);
+                LineNumberTableInformation[] information = new LineNumberTableInformation[length2];
 
-        } else if(Arrays.equals(attributeName, "RuntimeVisibleParameterAnnotations".getBytes("UTF-8"))) {
-            byte numberOfParameters = bytes[offset];
-            offset += 1;
-            int count = 0;
-            ParameterAnnotations[] parameterAnnotations = new ParameterAnnotations[(int) numberOfParameters];
+                while(count < length2) {
+                    byte[] startPC = Arrays.copyOfRange(bytes, offset, offset + 2);
+                    offset += 2;
 
-            while(count < (int) numberOfParameters) {
+                    byte[] lineNumber = Arrays.copyOfRange(bytes, offset, offset + 2);
+                    offset += 2;
+
+                    information[count] = new LineNumberTableInformation(startPC, lineNumber);
+
+                    count++;
+                }
+
+                returnInformation = new LineNumberTable(attributeNameIndex, attributeLength, lineNumberTableLength, information);
+
+            } else if(Arrays.equals(attributeName, "LocalVariableTable".getBytes("UTF-8"))) {
+                byte[] localVariableTableLength = Arrays.copyOfRange(bytes, offset, offset + 2);
+                offset += 2;
+
+                int localVariableTableLengthInteger = ((localVariableTableLength[0] & 0xFF) << 8) | (localVariableTableLength[1] & 0xFF);
+                int count = 0;
+                LocalVariableTableInformation[] localVariableTableInformation = new LocalVariableTableInformation[localVariableTableLengthInteger];
+
+                while(count < localVariableTableLengthInteger) {
+                    byte[] startPC = Arrays.copyOfRange(bytes, offset, offset + 2);
+                    offset += 2;
+
+                    byte[] length3 = Arrays.copyOfRange(bytes, offset, offset + 2);
+                    offset += 2;
+
+                    byte[] nameIndex = Arrays.copyOfRange(bytes, offset, offset + 2);
+                    offset += 2;
+
+                    byte[] descriptorIndex = Arrays.copyOfRange(bytes, offset, offset + 2);
+                    offset += 2;
+
+                    byte[] index = Arrays.copyOfRange(bytes, offset, offset + 2);
+                    offset += 2;
+
+                    localVariableTableInformation[count] = new LocalVariableTableInformation(startPC, length3, nameIndex, descriptorIndex, index);
+
+                    count++;
+                }
+
+                returnInformation = new LocalVariableTable(attributeNameIndex, attributeLength, localVariableTableLength, localVariableTableInformation);
+
+            } else if(Arrays.equals(attributeName, "LocalVariableTypeTable".getBytes("UTF-8"))) {
+                byte[] localVariableTypeTableLength = Arrays.copyOfRange(bytes, offset, offset + 2);
+                offset += 2;
+
+                int localVariableTypeTableLengthInteger = ((localVariableTypeTableLength[0] & 0xFF) << 8) | (localVariableTypeTableLength[1] & 0xFF);
+                int count = 0;
+
+                LocalVariableTypeTableInformation[] localVariableTypeTableInformation = new LocalVariableTypeTableInformation[localVariableTypeTableLengthInteger];
+
+                while(count < localVariableTypeTableLengthInteger) {
+                    byte[] startPC = Arrays.copyOfRange(bytes, offset, offset + 2);
+                    offset += 2;
+
+                    byte[] length4 = Arrays.copyOfRange(bytes, offset, offset + 2);
+                    offset += 2;
+
+                    byte[] nameIndex = Arrays.copyOfRange(bytes, offset, offset + 2);
+                    offset += 2;
+
+                    byte[] signatureIndex = Arrays.copyOfRange(bytes, offset, offset + 2);
+                    offset += 2;
+
+                    byte[] index = Arrays.copyOfRange(bytes, offset, offset + 2);
+                    offset += 2;
+
+                    localVariableTypeTableInformation[count] = new LocalVariableTypeTableInformation(startPC, length4, nameIndex, signatureIndex, index);
+
+                    count++;
+                }
+
+                returnInformation = new LocalVariableTypeTable(attributeNameIndex, attributeLength, localVariableTypeTableLength, localVariableTypeTableInformation);
+
+            } else if(Arrays.equals(attributeName, "Deprecated".getBytes("UTF-8"))) {
+                returnInformation = new Deprecated(attributeNameIndex, attributeLength);
+
+            } else if(Arrays.equals(attributeName, "RuntimeVisibleAnnotations".getBytes("UTF-8"))) {
                 byte[] numberOfAnnotations = Arrays.copyOfRange(bytes, offset, offset + 2);
                 offset += 2;
                 int numberOfAnnotationsInteger = ((numberOfAnnotations[0] & 0xFF) << 8) | (numberOfAnnotations[1] & 0xFF);
 
                 Annotation[] annotations = analyzeAnnotations(numberOfAnnotationsInteger);
-                parameterAnnotations[count] = new ParameterAnnotations(numberOfAnnotations, annotations);
+                returnInformation = new RuntimeVisibleAnnotations(attributeNameIndex, attributeLength, numberOfAnnotations, annotations);
 
-                count++;
-            }
-            returnInformation = new RuntimeVisibleParameterAnnotations(attributeNameIndex, attributeLength, numberOfParameters, parameterAnnotations);
-
-
-        } else if(Arrays.equals(attributeName, "RuntimeInvisibleParameterAnnotations".getBytes("UTF-8"))) {
-            byte numberOfParameters = bytes[offset];
-            offset += 1;
-            int count = 0;
-            ParameterAnnotations[] parameterAnnotations = new ParameterAnnotations[(int) numberOfParameters];
-
-            while(count < (int) numberOfParameters) {
+            } else if(Arrays.equals(attributeName, "RuntimeInvisibleAnnotations".getBytes("UTF-8"))) {
                 byte[] numberOfAnnotations = Arrays.copyOfRange(bytes, offset, offset + 2);
                 offset += 2;
                 int numberOfAnnotationsInteger = ((numberOfAnnotations[0] & 0xFF) << 8) | (numberOfAnnotations[1] & 0xFF);
 
                 Annotation[] annotations = analyzeAnnotations(numberOfAnnotationsInteger);
-                parameterAnnotations[count] = new ParameterAnnotations(numberOfAnnotations, annotations);
+                returnInformation = new RuntimeInvisibleAnnotations(attributeNameIndex, attributeLength, numberOfAnnotations, annotations);
 
-                count++;
-            }
+            } else if(Arrays.equals(attributeName, "RuntimeVisibleParameterAnnotations".getBytes("UTF-8"))) {
+                byte numberOfParameters = bytes[offset];
+                offset += 1;
+                int count = 0;
+                ParameterAnnotations[] parameterAnnotations = new ParameterAnnotations[(int) numberOfParameters];
 
-            returnInformation = new RuntimeInvisibleParameterAnnotations(attributeNameIndex, attributeLength, numberOfParameters, parameterAnnotations);
-
-        } else if(Arrays.equals(attributeName, "RuntimeVisibleTypeAnnotations".getBytes("UTF-8"))) {
-            byte[] numberOfAnnotations = Arrays.copyOfRange(bytes, offset, offset + 2);
-            offset += 2;
-            int numberOfAnnotationsInteger = ((numberOfAnnotations[0] & 0xFF) << 8) | (numberOfAnnotations[1] & 0xFF);
-            int count = 0;
-
-            TypeAnnotation[] typeAnnotations = new TypeAnnotation[numberOfAnnotationsInteger];
-
-            while(count < numberOfAnnotationsInteger) {
-                typeAnnotations[count] = analyzeTypeAnnotations();
-
-                count++;
-            }
-
-            returnInformation = new RuntimeVisibleTypeAnnotations(attributeNameIndex, attributeLength, numberOfAnnotations, typeAnnotations);
-
-        } else if(Arrays.equals(attributeName, "RuntimeInvisibleTypeAnnotations".getBytes("UTF-8"))) {
-            byte[] numberOfAnnotations = Arrays.copyOfRange(bytes, offset, offset + 2);
-            offset += 2;
-            int numberOfAnnotationsInteger = ((numberOfAnnotations[0] & 0xFF) << 8) | (numberOfAnnotations[1] & 0xFF);
-            int count = 0;
-
-            TypeAnnotation[] typeAnnotations = new TypeAnnotation[numberOfAnnotationsInteger];
-
-            while(count < numberOfAnnotationsInteger) {
-                typeAnnotations[count] = analyzeTypeAnnotations();
-
-                count++;
-            }
-
-            returnInformation = new RuntimeInvisibleTypeAnnotations(attributeNameIndex, attributeLength, numberOfAnnotations, typeAnnotations);
-
-        } else if(Arrays.equals(attributeName, "AnnotationDefault".getBytes("UTF-8"))) {
-            ElementValue elementValue = createElementValue();
-
-            returnInformation = new AnnotationDefault(attributeNameIndex, attributeLength, elementValue);
-
-        } else if(Arrays.equals(attributeName, "BootstrapMethods".getBytes("UTF-8"))) {
-            byte[] numberOfBootstrapMethods = Arrays.copyOfRange(bytes, offset, offset + 2);
-            offset += 2;
-
-            int numberOfBootstrapMethodsInteger = ((numberOfBootstrapMethods[0] & 0xFF) << 8) | (numberOfBootstrapMethods[1] & 0xFF);
-            int count = 0;
-            BootstrapMethodInformation[] bootstrapMethodInformation = new BootstrapMethodInformation[numberOfBootstrapMethodsInteger];
-
-            while(count < numberOfBootstrapMethodsInteger) {
-                byte[] bootstrapMethodReference = Arrays.copyOfRange(bytes, offset, offset + 2);
-                offset += 2;
-
-                byte[] numberOfBootstrapArguments = Arrays.copyOfRange(bytes, offset, offset + 2);
-                offset += 2;
-                int numberOfBootstrapArgumentsInteger = ((numberOfBootstrapArguments[0] & 0xFF) << 8) | (numberOfBootstrapArguments[1] & 0xFF);
-
-                int bootstrapCount = 0;
-                BootstrapArgument[] bootstrapArguments = new BootstrapArgument[numberOfBootstrapArgumentsInteger];
-
-                while(bootstrapCount < numberOfBootstrapArgumentsInteger) {
-                    bootstrapArguments[bootstrapCount] = new BootstrapArgument(Arrays.copyOfRange(bytes, offset, offset + 2));
+                while(count < (int) numberOfParameters) {
+                    byte[] numberOfAnnotations = Arrays.copyOfRange(bytes, offset, offset + 2);
                     offset += 2;
+                    int numberOfAnnotationsInteger = ((numberOfAnnotations[0] & 0xFF) << 8) | (numberOfAnnotations[1] & 0xFF);
 
-                    bootstrapCount++;
+                    Annotation[] annotations = analyzeAnnotations(numberOfAnnotationsInteger);
+                    parameterAnnotations[count] = new ParameterAnnotations(numberOfAnnotations, annotations);
+
+                    count++;
+                }
+                returnInformation = new RuntimeVisibleParameterAnnotations(attributeNameIndex, attributeLength, numberOfParameters, parameterAnnotations);
+
+
+            } else if(Arrays.equals(attributeName, "RuntimeInvisibleParameterAnnotations".getBytes("UTF-8"))) {
+                byte numberOfParameters = bytes[offset];
+                offset += 1;
+                int count = 0;
+                ParameterAnnotations[] parameterAnnotations = new ParameterAnnotations[(int) numberOfParameters];
+
+                while(count < (int) numberOfParameters) {
+                    byte[] numberOfAnnotations = Arrays.copyOfRange(bytes, offset, offset + 2);
+                    offset += 2;
+                    int numberOfAnnotationsInteger = ((numberOfAnnotations[0] & 0xFF) << 8) | (numberOfAnnotations[1] & 0xFF);
+
+                    Annotation[] annotations = analyzeAnnotations(numberOfAnnotationsInteger);
+                    parameterAnnotations[count] = new ParameterAnnotations(numberOfAnnotations, annotations);
+
+                    count++;
                 }
 
-                bootstrapMethodInformation[count] = new BootstrapMethodInformation(bootstrapMethodReference, numberOfBootstrapArguments, bootstrapArguments);
+                returnInformation = new RuntimeInvisibleParameterAnnotations(attributeNameIndex, attributeLength, numberOfParameters, parameterAnnotations);
 
-                count++;
-            }
-
-            returnInformation = new BootstrapMethods(attributeNameIndex, attributeLength, numberOfBootstrapMethods, bootstrapMethodInformation);
-
-
-        } else if(Arrays.equals(attributeName, "MethodParameters".getBytes("UTF-8"))) {
-            byte parametersCount = bytes[offset];
-            offset += 1;
-            int count = 0;
-            Parameter[] parameters = new Parameter[parametersCount];
-
-            while(count < parametersCount) {
-                byte[] nameIndex = Arrays.copyOfRange(bytes, offset, offset + 2);
+            } else if(Arrays.equals(attributeName, "RuntimeVisibleTypeAnnotations".getBytes("UTF-8"))) {
+                byte[] numberOfAnnotations = Arrays.copyOfRange(bytes, offset, offset + 2);
                 offset += 2;
+                int numberOfAnnotationsInteger = ((numberOfAnnotations[0] & 0xFF) << 8) | (numberOfAnnotations[1] & 0xFF);
+                int count = 0;
+                
+                TypeAnnotation[] typeAnnotations = new TypeAnnotation[numberOfAnnotationsInteger];
 
-                byte[] accessFlag = Arrays.copyOfRange(bytes, offset, offset + 2);
-                offset += 2;
-
-                parameters[count] = new Parameter(nameIndex, accessFlag);
-
-                count++;
-            }
-
-            returnInformation = new MethodParameters(attributeNameIndex, attributeLength, parametersCount, parameters);
-
-        } else if(Arrays.equals(attributeName, "Module".getBytes("UTF-8"))) {
-            byte[] moduleNameIndex = Arrays.copyOfRange(bytes, offset, offset + 2);
-            offset += 2;
-
-            byte[] moduleFlags = Arrays.copyOfRange(bytes, offset, offset + 2);
-            offset += 2;
-
-            byte[] moduleVersionIndex = Arrays.copyOfRange(bytes, offset, offset + 2);
-            offset += 2;
-
-            byte[] requiresCount = Arrays.copyOfRange(bytes, offset, offset + 2);
-            offset += 2;
-
-            int requiresCountInteger = ((requiresCount[0] & 0xFF) << 8) | (requiresCount[1] & 0xFF);
-            Requires[] requires = new Requires[requiresCountInteger];
-            int count = 0;
-
-            while(count < requiresCountInteger) {
-                byte[] requiresIndex = Arrays.copyOfRange(bytes, offset, offset + 2);
-                offset += 2;
-
-                byte[] requiresFlags = Arrays.copyOfRange(bytes, offset, offset + 2);
-                offset += 2;
-
-                byte[] requiresVersionIndex = Arrays.copyOfRange(bytes, offset, offset + 2);
-                offset += 2;
-
-                requires[count] = new Requires(requiresIndex, requiresFlags, requiresVersionIndex);
-
-                count++;
-            }
-
-            byte[] exportsCount = Arrays.copyOfRange(bytes, offset, offset + 2);
-            offset += 2;
-
-            int exportsCountInteger = ((exportsCount[0] & 0xFF) << 8) | (exportsCount[1] & 0xFF);
-            Exports[] exports = new Exports[exportsCountInteger];
-            count = 0;
-
-            while(count < exportsCountInteger) {
-                byte[] exportsIndex = Arrays.copyOfRange(bytes, offset, offset + 2);
-                offset += 2;
-
-                byte[] exportsFlags = Arrays.copyOfRange(bytes, offset, offset + 2);
-                offset += 2;
-
-                byte[] exportsToCount = Arrays.copyOfRange(bytes, offset, offset + 2);
-                offset += 2;
-                int exportsToCountInteger = ((exportsToCount[0] & 0xFF) << 8) | (exportsToCount[1] & 0xFF);
-                ExportIndex[] exportIndices = new ExportIndex[exportsToCountInteger];
-                int loop = 0;
-
-                while(loop < exportsToCountInteger) {
-                    exportIndices[loop] = new ExportIndex(Arrays.copyOfRange(bytes, offset, offset + 2));
-                    offset += 2;
-
-                    loop++;
-                }
-                exports[count] = new Exports(exportsIndex, exportsFlags, exportsToCount, exportIndices);
-                count++;
-            }
-
-            byte[] opensCount = Arrays.copyOfRange(bytes, offset, offset + 2);
-            offset += 2;
-
-            int opensCountInteger = ((opensCount[0] & 0xFF) << 8) | (opensCount[1] & 0xFF);
-            Opens[] opens = new Opens[opensCountInteger];
-            count = 0;
-
-            while(count < opensCountInteger) {
-                byte[] opensIndex = Arrays.copyOfRange(bytes, offset, offset + 2);
-                offset += 2;
-
-                byte[] opensFlags = Arrays.copyOfRange(bytes, offset, offset + 2);
-                offset += 2;
-
-                byte[] opensToCount = Arrays.copyOfRange(bytes, offset, offset + 2);
-                offset += 2;
-
-                int opensToCountInteger = ((opensToCount[0] & 0xFF) << 8) | (opensToCount[1] & 0xFF);
-                OpenIndex[] openToIndex = new OpenIndex[opensToCountInteger];
-                int loop = 0;
-
-                while(loop < opensToCountInteger) {
-                    openToIndex[loop] = new OpenIndex(Arrays.copyOfRange(bytes, offset, offset + 2));
-                    offset += 2;
-
-                    loop++;
-                }
-                opens[count] = new Opens(opensIndex, opensFlags, opensToCount, openToIndex);
-
-                count++;
-            }
-
-            byte[] usesCount = Arrays.copyOfRange(bytes, offset, offset + 2);
-            offset += 2;
-
-            int usesCountInteger = ((usesCount[0] & 0xFF) << 8) | (usesCount[1] & 0xFF);
-            UsesIndex[] usesIndex = new UsesIndex[usesCountInteger];
-            count = 0;
-
-            while(count < usesCountInteger) {
-                usesIndex[count] = new UsesIndex(Arrays.copyOfRange(bytes, offset, offset + 2));
-                offset += 2;
-
-                count++;
-            }
-
-            byte[] providesCount = Arrays.copyOfRange(bytes, offset, offset + 2);
-            offset += 2;
-            int providesCountInteger = ((providesCount[0] & 0xFF) << 8) | (providesCount[1] & 0xFF);
-            count = 0;
-            Provides[] provides = new Provides[providesCountInteger];
-
-            while(count < providesCountInteger) {
-                byte[] providesIndex = Arrays.copyOfRange(bytes, offset, offset + 2);
-                offset += 2;
-
-                byte[] providesWithCount = Arrays.copyOfRange(bytes, offset, offset + 2);
-                offset += 2;
-
-
-                int providesWithCountInteger = ((providesWithCount[0] & 0xFF) << 8) | (providesWithCount[1] & 0xFF);
-                ProvidesIndex[] providesWithIndex = new ProvidesIndex[providesWithCountInteger];
-                int loop = 0;
-
-                while(loop < providesWithCountInteger) {
-                    providesWithIndex[loop] = new ProvidesIndex(Arrays.copyOfRange(bytes, offset, offset + 2));
-                    offset += 2;
-
-                    loop++;
+                while(count < numberOfAnnotationsInteger) {
+                    typeAnnotations[count] = analyzeTypeAnnotations();
+                    
+                    count++;
                 }
 
-                provides[count] = new Provides(providesIndex, providesWithCount, providesWithIndex);
+                returnInformation = new RuntimeVisibleTypeAnnotations(attributeNameIndex, attributeLength, numberOfAnnotations, typeAnnotations);
 
-                count++;
+            } else if(Arrays.equals(attributeName, "RuntimeInvisibleTypeAnnotations".getBytes("UTF-8"))) {
+                byte[] numberOfAnnotations = Arrays.copyOfRange(bytes, offset, offset + 2);
+                
+                offset += 2;
+                int numberOfAnnotationsInteger = ((numberOfAnnotations[0] & 0xFF) << 8) | (numberOfAnnotations[1] & 0xFF);
+                int count = 0;
+
+
+                TypeAnnotation[] typeAnnotations = new TypeAnnotation[numberOfAnnotationsInteger];
+
+                while(count < numberOfAnnotationsInteger) {
+                    typeAnnotations[count] = analyzeTypeAnnotations();
+
+                    count++;
+                }
+
+                returnInformation = new RuntimeInvisibleTypeAnnotations(attributeNameIndex, attributeLength, numberOfAnnotations, typeAnnotations);
+
+            } else if(Arrays.equals(attributeName, "AnnotationDefault".getBytes("UTF-8"))) {
+                ElementValue elementValue = createElementValue();
+
+                returnInformation = new AnnotationDefault(attributeNameIndex, attributeLength, elementValue);
+
+            } else if(Arrays.equals(attributeName, "BootstrapMethods".getBytes("UTF-8"))) {
+                byte[] numberOfBootstrapMethods = Arrays.copyOfRange(bytes, offset, offset + 2);
+                offset += 2;
+
+                int numberOfBootstrapMethodsInteger = ((numberOfBootstrapMethods[0] & 0xFF) << 8) | (numberOfBootstrapMethods[1] & 0xFF);
+                int count = 0;
+                BootstrapMethodInformation[] bootstrapMethodInformation = new BootstrapMethodInformation[numberOfBootstrapMethodsInteger];
+
+                while(count < numberOfBootstrapMethodsInteger) {
+                    byte[] bootstrapMethodReference = Arrays.copyOfRange(bytes, offset, offset + 2);
+                    offset += 2;
+
+                    byte[] numberOfBootstrapArguments = Arrays.copyOfRange(bytes, offset, offset + 2);
+                    offset += 2;
+                    int numberOfBootstrapArgumentsInteger = ((numberOfBootstrapArguments[0] & 0xFF) << 8) | (numberOfBootstrapArguments[1] & 0xFF);
+
+                    int bootstrapCount = 0;
+                    BootstrapArgument[] bootstrapArguments = new BootstrapArgument[numberOfBootstrapArgumentsInteger];
+
+                    while(bootstrapCount < numberOfBootstrapArgumentsInteger) {
+                        bootstrapArguments[bootstrapCount] = new BootstrapArgument(Arrays.copyOfRange(bytes, offset, offset + 2));
+                        offset += 2;
+
+                        bootstrapCount++;
+                    }
+
+                    bootstrapMethodInformation[count] = new BootstrapMethodInformation(bootstrapMethodReference, numberOfBootstrapArguments, bootstrapArguments);
+
+                    count++;
+                }
+
+                returnInformation = new BootstrapMethods(attributeNameIndex, attributeLength, numberOfBootstrapMethods, bootstrapMethodInformation);
+
+
+            } else if(Arrays.equals(attributeName, "MethodParameters".getBytes("UTF-8"))) {
+                byte parametersCount = bytes[offset];
+                offset += 1;
+                int count = 0;
+                Parameter[] parameters = new Parameter[parametersCount];
+
+                while(count < parametersCount) {
+                    byte[] nameIndex = Arrays.copyOfRange(bytes, offset, offset + 2);
+                    offset += 2;
+
+                    byte[] accessFlag = Arrays.copyOfRange(bytes, offset, offset + 2);
+                    offset += 2;
+
+                    parameters[count] = new Parameter(nameIndex, accessFlag);
+
+                    count++;
+                }
+
+                returnInformation = new MethodParameters(attributeNameIndex, attributeLength, parametersCount, parameters);
+
+            } else if(Arrays.equals(attributeName, "Module".getBytes("UTF-8"))) {
+                byte[] moduleNameIndex = Arrays.copyOfRange(bytes, offset, offset + 2);
+                offset += 2;
+
+                byte[] moduleFlags = Arrays.copyOfRange(bytes, offset, offset + 2);
+                offset += 2;
+
+                byte[] moduleVersionIndex = Arrays.copyOfRange(bytes, offset, offset + 2);
+                offset += 2;
+
+                byte[] requiresCount = Arrays.copyOfRange(bytes, offset, offset + 2);
+                offset += 2;
+
+                int requiresCountInteger = ((requiresCount[0] & 0xFF) << 8) | (requiresCount[1] & 0xFF);
+                Requires[] requires = new Requires[requiresCountInteger];
+                int count = 0;
+
+                while(count < requiresCountInteger) {
+                    byte[] requiresIndex = Arrays.copyOfRange(bytes, offset, offset + 2);
+                    offset += 2;
+
+                    byte[] requiresFlags = Arrays.copyOfRange(bytes, offset, offset + 2);
+                    offset += 2;
+
+                    byte[] requiresVersionIndex = Arrays.copyOfRange(bytes, offset, offset + 2);
+                    offset += 2;
+
+                    requires[count] = new Requires(requiresIndex, requiresFlags, requiresVersionIndex);
+
+                    count++;
+                }
+
+                byte[] exportsCount = Arrays.copyOfRange(bytes, offset, offset + 2);
+                offset += 2;
+
+                int exportsCountInteger = ((exportsCount[0] & 0xFF) << 8) | (exportsCount[1] & 0xFF);
+                Exports[] exports = new Exports[exportsCountInteger];
+                count = 0;
+
+                while(count < exportsCountInteger) {
+                    byte[] exportsIndex = Arrays.copyOfRange(bytes, offset, offset + 2);
+                    offset += 2;
+
+                    byte[] exportsFlags = Arrays.copyOfRange(bytes, offset, offset + 2);
+                    offset += 2;
+
+                    byte[] exportsToCount = Arrays.copyOfRange(bytes, offset, offset + 2);
+                    offset += 2;
+                    int exportsToCountInteger = ((exportsToCount[0] & 0xFF) << 8) | (exportsToCount[1] & 0xFF);
+                    ExportIndex[] exportIndices = new ExportIndex[exportsToCountInteger];
+                    int loop = 0;
+
+                    while(loop < exportsToCountInteger) {
+                        exportIndices[loop] = new ExportIndex(Arrays.copyOfRange(bytes, offset, offset + 2));
+                        offset += 2;
+
+                        loop++;
+                    }
+                    exports[count] = new Exports(exportsIndex, exportsFlags, exportsToCount, exportIndices);
+                    count++;
+                }
+
+                byte[] opensCount = Arrays.copyOfRange(bytes, offset, offset + 2);
+                offset += 2;
+
+                int opensCountInteger = ((opensCount[0] & 0xFF) << 8) | (opensCount[1] & 0xFF);
+                Opens[] opens = new Opens[opensCountInteger];
+                count = 0;
+
+                while(count < opensCountInteger) {
+                    byte[] opensIndex = Arrays.copyOfRange(bytes, offset, offset + 2);
+                    offset += 2;
+
+                    byte[] opensFlags = Arrays.copyOfRange(bytes, offset, offset + 2);
+                    offset += 2;
+
+                    byte[] opensToCount = Arrays.copyOfRange(bytes, offset, offset + 2);
+                    offset += 2;
+
+                    int opensToCountInteger = ((opensToCount[0] & 0xFF) << 8) | (opensToCount[1] & 0xFF);
+                    OpenIndex[] openToIndex = new OpenIndex[opensToCountInteger];
+                    int loop = 0;
+
+                    while(loop < opensToCountInteger) {
+                        openToIndex[loop] = new OpenIndex(Arrays.copyOfRange(bytes, offset, offset + 2));
+                        offset += 2;
+
+                        loop++;
+                    }
+                    opens[count] = new Opens(opensIndex, opensFlags, opensToCount, openToIndex);
+
+                    count++;
+                }
+
+                byte[] usesCount = Arrays.copyOfRange(bytes, offset, offset + 2);
+                offset += 2;
+
+                int usesCountInteger = ((usesCount[0] & 0xFF) << 8) | (usesCount[1] & 0xFF);
+                UsesIndex[] usesIndex = new UsesIndex[usesCountInteger];
+                count = 0;
+
+                while(count < usesCountInteger) {
+                    usesIndex[count] = new UsesIndex(Arrays.copyOfRange(bytes, offset, offset + 2));
+                    offset += 2;
+
+                    count++;
+                }
+
+                byte[] providesCount = Arrays.copyOfRange(bytes, offset, offset + 2);
+                offset += 2;
+                int providesCountInteger = ((providesCount[0] & 0xFF) << 8) | (providesCount[1] & 0xFF);
+                count = 0;
+                Provides[] provides = new Provides[providesCountInteger];
+
+                while(count < providesCountInteger) {
+                    byte[] providesIndex = Arrays.copyOfRange(bytes, offset, offset + 2);
+                    offset += 2;
+
+                    byte[] providesWithCount = Arrays.copyOfRange(bytes, offset, offset + 2);
+                    offset += 2;
+
+
+                    int providesWithCountInteger = ((providesWithCount[0] & 0xFF) << 8) | (providesWithCount[1] & 0xFF);
+                    ProvidesIndex[] providesWithIndex = new ProvidesIndex[providesWithCountInteger];
+                    int loop = 0;
+
+                    while(loop < providesWithCountInteger) {
+                        providesWithIndex[loop] = new ProvidesIndex(Arrays.copyOfRange(bytes, offset, offset + 2));
+                        offset += 2;
+
+                        loop++;
+                    }
+
+                    provides[count] = new Provides(providesIndex, providesWithCount, providesWithIndex);
+
+                    count++;
+                }
+                returnInformation = new Module(attributeNameIndex, attributeLength, moduleNameIndex, moduleFlags, moduleVersionIndex, requiresCount, requires, exportsCount, exports, opensCount, opens, usesCount, usesIndex, providesCount, provides);
+
+            } else if(Arrays.equals(attributeName, "ModulePackages".getBytes("UTF-8"))) {
+                byte[] packageCount = Arrays.copyOfRange(bytes, offset, offset + 2);
+                offset += 2;
+                int packageCountInteger = ((packageCount[0] & 0xFF) << 8) | (packageCount[1] & 0xFF);
+                int count = 0;
+                PackageIndex[] packageIndex = new PackageIndex[packageCountInteger];
+
+                while(count < packageCountInteger) {
+                    packageIndex[count] = new PackageIndex(Arrays.copyOfRange(bytes, offset, offset + 2));
+                    offset += 2;
+
+                    count++;
+                }
+
+                returnInformation = new ModulePackages(attributeNameIndex, attributeLength, packageCount, packageIndex);
+
+
+            } else if(Arrays.equals(attributeName, "ModuleMainClass".getBytes("UTF-8"))) {
+                byte[] mainClassIndex = Arrays.copyOfRange(bytes, offset, offset + 2);
+                offset += 2;
+
+                returnInformation = new ModuleMainClass(attributeNameIndex, attributeLength, mainClassIndex);
+
+            } else if(Arrays.equals(attributeName, "NestHost".getBytes("UTF-8"))) {
+                byte[] hostClassIndex = Arrays.copyOfRange(bytes, offset, offset + 2);
+                offset += 2;
+
+                returnInformation = new NestHost(attributeNameIndex, attributeLength, hostClassIndex);
+
+            } else if(Arrays.equals(attributeName, "NestMembers".getBytes("UTF-8"))) {
+                byte[] numberOfClasses = Arrays.copyOfRange(bytes, offset, offset + 2);
+                offset += 2;
+                int numberOfClassesInteger = ((numberOfClasses[0] & 0xFF) << 8) | (numberOfClasses[1] & 0xFF);
+                int count = 0;
+                Classes[] classes = new Classes[numberOfClassesInteger];
+
+                while(count < numberOfClassesInteger) {
+                    classes[count] = new Classes(Arrays.copyOfRange(bytes, offset, offset + 2));
+                    offset += 2;
+
+                    count++;
+                }
+                returnInformation = new NestMembers(attributeNameIndex, attributeLength, numberOfClasses, classes);
+
+            } else if(Arrays.equals(attributeName, "Record".getBytes("UTF-8"))) {
+                byte[] componentsCount = Arrays.copyOfRange(bytes, offset, offset + 2);
+                offset += 2;
+                int componentsCountInteger = ((componentsCount[0] & 0xFF) << 8) | (componentsCount[1] & 0xFF);
+                int count = 0;
+
+                RecordComponentInformation[] information = new RecordComponentInformation[componentsCountInteger];
+
+                while(count < componentsCountInteger) {
+                    byte[] nameIndex = Arrays.copyOfRange(bytes, offset, offset + 2);
+                    offset += 2;
+
+                    byte[] descriptorIndex = Arrays.copyOfRange(bytes, offset, offset + 2);
+                    offset += 2;
+
+                    byte[] attributesCount = Arrays.copyOfRange(bytes, offset, offset + 2);
+                    offset += 2;
+                    int attributesCountInteger = ((attributesCount[0] & 0xFF) << 8) | (attributesCount[1] & 0xFF);
+                    AttributeInformation[] attributeInformation = analyzeAttribute(attributesCountInteger);
+
+                    information[count] = new RecordComponentInformation(nameIndex, descriptorIndex, attributesCount, attributeInformation);
+
+                    count++;
+                }
+
+                returnInformation = new Record(attributeNameIndex, attributeLength, componentsCount, information);
+
+            } else if(Arrays.equals(attributeName, "PermittedSubclasses".getBytes("UTF-8"))) {
+                byte[] numberOfClasses = Arrays.copyOfRange(bytes, offset, offset + 2);
+                offset += 2;
+
+                int numberOfClassesInteger = ((numberOfClasses[0] & 0xFF) << 8) | (numberOfClasses[1] & 0xFF);
+                Classes[] classes = new Classes[numberOfClassesInteger];
+                int count = 0;
+
+                while(count < numberOfClassesInteger) {
+                    classes[count] = new Classes(Arrays.copyOfRange(bytes, offset, offset + 2));
+                    offset += 2;
+
+                    count++;
+                }
+                returnInformation = new PermittedSubClasses(attributeNameIndex, attributeLength, numberOfClasses, classes);
+
+            } else {
+                HashSet<String> customAttributes = ByteTok.getCustomAttributes();
+                String attrName = new String(attributeName, StandardCharsets.UTF_8);
+                customAttributes.add(attrName);
+                ByteTok.setCustomAttributes(customAttributes);
+
+                int attributeContents = ((attributeLength[0] & 0xFF) << 24) |
+                                        ((attributeLength[1] & 0xFF) << 16) |
+                                        ((attributeLength[2] & 0xFF) << 8) |
+                                        (attributeLength[3] & 0xFF);
+
+                //System.out.println("Unknown attribute: " + attrName + " length=" + attributeContents);
+
+                int end = Math.min(offset + attributeContents, bytes.length);
+                byte[] attributeContentsByte = Arrays.copyOfRange(bytes, offset, end);
+                offset += attributeContents;
+
+                StringBuilder sb = new StringBuilder();
+                for (byte b : attributeContentsByte) {
+                    sb.append(String.format("%02X ", b));
+                }
+            // System.out.println("Custom attribute raw bytes: " + sb.toString());
+                
+                returnInformation = new CustomDefined(attributeNameIndex, attributeLength, attributeContentsByte);
             }
-            returnInformation = new Module(attributeNameIndex, attributeLength, moduleNameIndex, moduleFlags, moduleVersionIndex, requiresCount, requires, exportsCount, exports, opensCount, opens, usesCount, usesIndex, providesCount, provides);
+        } catch (Exception e) {
+            System.out.println("[ERROR] Malformed attribute at offset=" + offset + " : " + e.getMessage());
 
-        } else if(Arrays.equals(attributeName, "ModulePackages".getBytes("UTF-8"))) {
-            byte[] packageCount = Arrays.copyOfRange(bytes, offset, offset + 2);
-            offset += 2;
-            int packageCountInteger = ((packageCount[0] & 0xFF) << 8) | (packageCount[1] & 0xFF);
-            int count = 0;
-            PackageIndex[] packageIndex = new PackageIndex[packageCountInteger];
+            int length = ((attributeLength[0] & 0xFF) << 24) |
+                        ((attributeLength[1] & 0xFF) << 16) |
+                        ((attributeLength[2] & 0xFF) << 8) |
+                        (attributeLength[3] & 0xFF);
 
-            while(count < packageCountInteger) {
-                packageIndex[count] = new PackageIndex(Arrays.copyOfRange(bytes, offset, offset + 2));
-                offset += 2;
+            // 깨진 속성 본문을 그대로 저장
+            byte[] content = Arrays.copyOfRange(bytes, startOffset + 6, Math.min(startOffset + 6 + length, bytes.length));
+            offset = startOffset + 6 + length;
 
-                count++;
-            }
-
-            returnInformation = new ModulePackages(attributeNameIndex, attributeLength, packageCount, packageIndex);
-
-
-        } else if(Arrays.equals(attributeName, "ModuleMainClass".getBytes("UTF-8"))) {
-            byte[] mainClassIndex = Arrays.copyOfRange(bytes, offset, offset + 2);
-            offset += 2;
-
-            returnInformation = new ModuleMainClass(attributeNameIndex, attributeLength, mainClassIndex);
-
-        } else if(Arrays.equals(attributeName, "NestHost".getBytes("UTF-8"))) {
-            byte[] hostClassIndex = Arrays.copyOfRange(bytes, offset, offset + 2);
-            offset += 2;
-
-            returnInformation = new NestHost(attributeNameIndex, attributeLength, hostClassIndex);
-
-        } else if(Arrays.equals(attributeName, "NestMembers".getBytes("UTF-8"))) {
-            byte[] numberOfClasses = Arrays.copyOfRange(bytes, offset, offset + 2);
-            offset += 2;
-            int numberOfClassesInteger = ((numberOfClasses[0] & 0xFF) << 8) | (numberOfClasses[1] & 0xFF);
-            int count = 0;
-            Classes[] classes = new Classes[numberOfClassesInteger];
-
-            while(count < numberOfClassesInteger) {
-                classes[count] = new Classes(Arrays.copyOfRange(bytes, offset, offset + 2));
-                offset += 2;
-
-                count++;
-            }
-            returnInformation = new NestMembers(attributeNameIndex, attributeLength, numberOfClasses, classes);
-
-        } else if(Arrays.equals(attributeName, "Record".getBytes("UTF-8"))) {
-            byte[] componentsCount = Arrays.copyOfRange(bytes, offset, offset + 2);
-            offset += 2;
-            int componentsCountInteger = ((componentsCount[0] & 0xFF) << 8) | (componentsCount[1] & 0xFF);
-            int count = 0;
-
-            RecordComponentInformation[] information = new RecordComponentInformation[componentsCountInteger];
-
-            while(count < componentsCountInteger) {
-                byte[] nameIndex = Arrays.copyOfRange(bytes, offset, offset + 2);
-                offset += 2;
-
-                byte[] descriptorIndex = Arrays.copyOfRange(bytes, offset, offset + 2);
-                offset += 2;
-
-                byte[] attributesCount = Arrays.copyOfRange(bytes, offset, offset + 2);
-                offset += 2;
-                int attributesCountInteger = ((attributesCount[0] & 0xFF) << 8) | (attributesCount[1] & 0xFF);
-                AttributeInformation[] attributeInformation = analyzeAttribute(attributesCountInteger);
-
-                information[count] = new RecordComponentInformation(nameIndex, descriptorIndex, attributesCount, attributeInformation);
-
-                count++;
-            }
-
-            returnInformation = new Record(attributeNameIndex, attributeLength, componentsCount, information);
-
-        } else if(Arrays.equals(attributeName, "PermittedSubclasses".getBytes("UTF-8"))) {
-            byte[] numberOfClasses = Arrays.copyOfRange(bytes, offset, offset + 2);
-            offset += 2;
-
-            int numberOfClassesInteger = ((numberOfClasses[0] & 0xFF) << 8) | (numberOfClasses[1] & 0xFF);
-            Classes[] classes = new Classes[numberOfClassesInteger];
-            int count = 0;
-
-            while(count < numberOfClassesInteger) {
-                classes[count] = new Classes(Arrays.copyOfRange(bytes, offset, offset + 2));
-                offset += 2;
-
-                count++;
-            }
-            returnInformation = new PermittedSubClasses(attributeNameIndex, attributeLength, numberOfClasses, classes);
-
-        } else {
-
-            HashSet<String> customAttributes = ByteTok.getCustomAttributes();
-            customAttributes.add(new String(attributeName, StandardCharsets.UTF_8)); // add custom attribute name static variable
-            ByteTok.setCustomAttributes(customAttributes);
-
-            System.out.println(new String(attributeName, StandardCharsets.UTF_8));
-
-//            if("Bridge".compareTo(new String(attributeName, StandardCharsets.UTF_8)) == 1) {
-//            }
-
-
-            int attributeContents = ((attributeLength[0] & 0xFF) << 24) | ((attributeLength[1] & 0xFF) << 16) | ((attributeLength[2] & 0xFF) << 8) | (attributeLength[3] & 0xFF);
-
-            byte[] attributeContentsByte = Arrays.copyOfRange(bytes, offset, offset + attributeContents);
-            System.out.println(attributeContents);
-            offset += attributeContents;
-
-            returnInformation = new CustomDefined(attributeNameIndex, attributeLength, attributeContentsByte);
+            returnInformation = new ErrorAttribute(
+                Arrays.copyOfRange(bytes, startOffset, startOffset + 2), attributeLength, content);
         }
 
         return returnInformation;
@@ -1385,11 +1447,10 @@ public class ByteAnalyzer {
      * @return The return value is TypeAnnotation to represent the architecture of TypeAnnotation.
      */
     public TypeAnnotation analyzeTypeAnnotations() {
+
         byte targetType = bytes[offset];
         offset += 1;
         TargetInformation targetInformation;
-
-
 
         byte[] tableLength;
         int tableLengthInteger;
@@ -1402,39 +1463,39 @@ public class ByteAnalyzer {
             case 0x00:
                 targetInformation = new TypeParameterTarget(bytes[offset]);
                 offset += 1;
-
+                
                 break;
             case 0x01:
                 targetInformation = new TypeParameterTarget(bytes[offset]);
                 offset += 1;
-
+                
                 break;
             case 0x10:
                 targetInformation = new SuperTypeTarget(Arrays.copyOfRange(bytes, offset, offset + 2));
                 offset += 2;
-
+                
                 break;
             case 0x11:
                 targetInformation = new TypeParameterBoundTarget(bytes[offset], bytes[offset + 1]);
                 offset += 2;
-
+                
                 break;
             case 0x12:
                 targetInformation = new TypeParameterBoundTarget(bytes[offset], bytes[offset + 1]);
                 offset += 2;
-
+                
                 break;
             case 0x13:
                 targetInformation = new EmptyTarget();
-
+                
                 break;
             case 0x14:
                 targetInformation = new EmptyTarget();
-
+                
                 break;
             case 0x15:
                 targetInformation = new EmptyTarget();
-
+                
                 break;
             case 0x16:
                 targetInformation = new FormalParameterTarget(bytes[offset]);
@@ -1505,7 +1566,6 @@ public class ByteAnalyzer {
                 offset += 2;
 
                 targetInformation = new OffsetTarget(offsetTarget);
-
 
                 break;
             case 0x44:
@@ -1580,14 +1640,17 @@ public class ByteAnalyzer {
 
                 break;
             default:
+
                 throw new Error();
         }
         TypePath typePath = analyzeTypePath();
+
         byte[] typeIndex = Arrays.copyOfRange(bytes, offset, offset + 2);
         offset += 2;
-
+       
         byte[] numberOfElementValuePairs = Arrays.copyOfRange(bytes, offset, offset + 2);
         offset += 2;
+
         int numberOfElementValuePairsInteger = ((numberOfElementValuePairs[0] & 0xFF) << 8) | (numberOfElementValuePairs[1] & 0xFF);
         ElementValuePairs[] elementValuePairs = analyzeElementValuePairs(numberOfElementValuePairsInteger);
 

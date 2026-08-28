@@ -1,0 +1,234 @@
+package hgu.isel.structure.attribute.type.code;
+
+import java.util.HashMap;
+import java.util.Map;
+
+public class OpcodeTable {
+    public static final Map<String, String> OPCODE_NAME_MAP = new HashMap<>();
+
+    static {
+        // Constants
+        OPCODE_NAME_MAP.put("00", "nop");
+        OPCODE_NAME_MAP.put("01", "aconst_null");
+        OPCODE_NAME_MAP.put("02", "iconst_m1");
+        OPCODE_NAME_MAP.put("03", "iconst_0");
+        OPCODE_NAME_MAP.put("04", "iconst_1");
+        OPCODE_NAME_MAP.put("05", "iconst_2");
+        OPCODE_NAME_MAP.put("06", "iconst_3");
+        OPCODE_NAME_MAP.put("07", "iconst_4");
+        OPCODE_NAME_MAP.put("08", "iconst_5");
+        OPCODE_NAME_MAP.put("09", "lconst_0");
+        OPCODE_NAME_MAP.put("0A", "lconst_1");
+        OPCODE_NAME_MAP.put("0B", "fconst_0");
+        OPCODE_NAME_MAP.put("0C", "fconst_1");
+        OPCODE_NAME_MAP.put("0D", "fconst_2");
+        OPCODE_NAME_MAP.put("0E", "dconst_0");
+        OPCODE_NAME_MAP.put("0F", "dconst_1");
+        OPCODE_NAME_MAP.put("10", "bipush");
+        OPCODE_NAME_MAP.put("11", "sipush");
+        OPCODE_NAME_MAP.put("12", "ldc");
+        OPCODE_NAME_MAP.put("13", "ldc_w");
+        OPCODE_NAME_MAP.put("14", "ldc2_w");
+
+        // Loads
+        OPCODE_NAME_MAP.put("15", "iload");
+        OPCODE_NAME_MAP.put("16", "lload");
+        OPCODE_NAME_MAP.put("17", "fload");
+        OPCODE_NAME_MAP.put("18", "dload");
+        OPCODE_NAME_MAP.put("19", "aload");
+        OPCODE_NAME_MAP.put("1A", "iload_0");
+        OPCODE_NAME_MAP.put("1B", "iload_1");
+        OPCODE_NAME_MAP.put("1C", "iload_2");
+        OPCODE_NAME_MAP.put("1D", "iload_3");
+        OPCODE_NAME_MAP.put("1E", "lload_0");
+        OPCODE_NAME_MAP.put("1F", "lload_1");
+        OPCODE_NAME_MAP.put("20", "lload_2");
+        OPCODE_NAME_MAP.put("21", "lload_3");
+        OPCODE_NAME_MAP.put("22", "fload_0");
+        OPCODE_NAME_MAP.put("23", "fload_1");
+        OPCODE_NAME_MAP.put("24", "fload_2");
+        OPCODE_NAME_MAP.put("25", "fload_3");
+        OPCODE_NAME_MAP.put("26", "dload_0");
+        OPCODE_NAME_MAP.put("27", "dload_1");
+        OPCODE_NAME_MAP.put("28", "dload_2");
+        OPCODE_NAME_MAP.put("29", "dload_3");
+        OPCODE_NAME_MAP.put("2A", "aload_0");
+        OPCODE_NAME_MAP.put("2B", "aload_1");
+        OPCODE_NAME_MAP.put("2C", "aload_2");
+        OPCODE_NAME_MAP.put("2D", "aload_3");
+        OPCODE_NAME_MAP.put("2E", "iaload");
+        OPCODE_NAME_MAP.put("2F", "laload");
+        OPCODE_NAME_MAP.put("30", "faload");
+        OPCODE_NAME_MAP.put("31", "daload");
+        OPCODE_NAME_MAP.put("32", "aaload");
+        OPCODE_NAME_MAP.put("33", "baload");
+        OPCODE_NAME_MAP.put("34", "caload");
+        OPCODE_NAME_MAP.put("35", "saload");
+
+        // Stores
+        OPCODE_NAME_MAP.put("36", "istore");
+        OPCODE_NAME_MAP.put("37", "lstore");
+        OPCODE_NAME_MAP.put("38", "fstore");
+        OPCODE_NAME_MAP.put("39", "dstore");
+        OPCODE_NAME_MAP.put("3A", "astore");
+        OPCODE_NAME_MAP.put("3B", "istore_0");
+        OPCODE_NAME_MAP.put("3C", "istore_1");
+        OPCODE_NAME_MAP.put("3D", "istore_2");
+        OPCODE_NAME_MAP.put("3E", "istore_3");
+        OPCODE_NAME_MAP.put("3F", "lstore_0");
+        OPCODE_NAME_MAP.put("40", "lstore_1");
+        OPCODE_NAME_MAP.put("41", "lstore_2");
+        OPCODE_NAME_MAP.put("42", "lstore_3");
+        OPCODE_NAME_MAP.put("43", "fstore_0");
+        OPCODE_NAME_MAP.put("44", "fstore_1");
+        OPCODE_NAME_MAP.put("45", "fstore_2");
+        OPCODE_NAME_MAP.put("46", "fstore_3");
+        OPCODE_NAME_MAP.put("47", "dstore_0");
+        OPCODE_NAME_MAP.put("48", "dstore_1");
+        OPCODE_NAME_MAP.put("49", "dstore_2");
+        OPCODE_NAME_MAP.put("4A", "dstore_3");
+        OPCODE_NAME_MAP.put("4B", "astore_0");
+        OPCODE_NAME_MAP.put("4C", "astore_1");
+        OPCODE_NAME_MAP.put("4D", "astore_2");
+        OPCODE_NAME_MAP.put("4E", "astore_3");
+        OPCODE_NAME_MAP.put("4F", "iastore");
+        OPCODE_NAME_MAP.put("50", "lastore");
+        OPCODE_NAME_MAP.put("51", "fastore");
+        OPCODE_NAME_MAP.put("52", "dastore");
+        OPCODE_NAME_MAP.put("53", "aastore");
+        OPCODE_NAME_MAP.put("54", "bastore");
+        OPCODE_NAME_MAP.put("55", "castore");
+        OPCODE_NAME_MAP.put("56", "sastore");
+
+        // Stack
+        OPCODE_NAME_MAP.put("57", "pop");
+        OPCODE_NAME_MAP.put("58", "pop2");
+        OPCODE_NAME_MAP.put("59", "dup");
+        OPCODE_NAME_MAP.put("5A", "dup_x1");
+        OPCODE_NAME_MAP.put("5B", "dup_x2");
+        OPCODE_NAME_MAP.put("5C", "dup2");
+        OPCODE_NAME_MAP.put("5D", "dup2_x1");
+        OPCODE_NAME_MAP.put("5E", "dup2_x2");
+        OPCODE_NAME_MAP.put("5F", "swap");
+
+        // Arithmetic
+        OPCODE_NAME_MAP.put("60", "iadd");
+        OPCODE_NAME_MAP.put("61", "ladd");
+        OPCODE_NAME_MAP.put("62", "fadd");
+        OPCODE_NAME_MAP.put("63", "dadd");
+        OPCODE_NAME_MAP.put("64", "isub");
+        OPCODE_NAME_MAP.put("65", "lsub");
+        OPCODE_NAME_MAP.put("66", "fsub");
+        OPCODE_NAME_MAP.put("67", "dsub");
+        OPCODE_NAME_MAP.put("68", "imul");
+        OPCODE_NAME_MAP.put("69", "lmul");
+        OPCODE_NAME_MAP.put("6A", "fmul");
+        OPCODE_NAME_MAP.put("6B", "dmul");
+        OPCODE_NAME_MAP.put("6C", "idiv");
+        OPCODE_NAME_MAP.put("6D", "ldiv");
+        OPCODE_NAME_MAP.put("6E", "fdiv");
+        OPCODE_NAME_MAP.put("6F", "ddiv");
+        OPCODE_NAME_MAP.put("70", "irem");
+        OPCODE_NAME_MAP.put("71", "lrem");
+        OPCODE_NAME_MAP.put("72", "frem");
+        OPCODE_NAME_MAP.put("73", "drem");
+        OPCODE_NAME_MAP.put("74", "ineg");
+        OPCODE_NAME_MAP.put("75", "lneg");
+        OPCODE_NAME_MAP.put("76", "fneg");
+        OPCODE_NAME_MAP.put("77", "dneg");
+        OPCODE_NAME_MAP.put("78", "ishl");
+        OPCODE_NAME_MAP.put("79", "lshl");
+        OPCODE_NAME_MAP.put("7A", "ishr");
+        OPCODE_NAME_MAP.put("7B", "lshr");
+        OPCODE_NAME_MAP.put("7C", "iushr");
+        OPCODE_NAME_MAP.put("7D", "lushr");
+        OPCODE_NAME_MAP.put("7E", "iand");
+        OPCODE_NAME_MAP.put("7F", "land");
+        OPCODE_NAME_MAP.put("80", "ior");
+        OPCODE_NAME_MAP.put("81", "lor");
+        OPCODE_NAME_MAP.put("82", "ixor");
+        OPCODE_NAME_MAP.put("83", "lxor");
+        OPCODE_NAME_MAP.put("84", "iinc");
+
+        // Control Flow
+        OPCODE_NAME_MAP.put("85", "i2l");
+        OPCODE_NAME_MAP.put("86", "i2f");
+        OPCODE_NAME_MAP.put("87", "i2d");
+        OPCODE_NAME_MAP.put("88", "l2i");
+        OPCODE_NAME_MAP.put("89", "l2f");
+        OPCODE_NAME_MAP.put("8A", "l2d");
+        OPCODE_NAME_MAP.put("8B", "f2i");
+        OPCODE_NAME_MAP.put("8C", "f2l");
+        OPCODE_NAME_MAP.put("8D", "f2d");
+        OPCODE_NAME_MAP.put("8E", "d2i");
+        OPCODE_NAME_MAP.put("8F", "d2l");
+        OPCODE_NAME_MAP.put("90", "d2f");
+        OPCODE_NAME_MAP.put("91", "i2b");
+        OPCODE_NAME_MAP.put("92", "i2c");
+        OPCODE_NAME_MAP.put("93", "i2s");
+
+        OPCODE_NAME_MAP.put("94", "lcmp");
+        OPCODE_NAME_MAP.put("95", "fcmpl");
+        OPCODE_NAME_MAP.put("96", "fcmpg");
+        OPCODE_NAME_MAP.put("97", "dcmpl");
+        OPCODE_NAME_MAP.put("98", "dcmpg");
+
+        OPCODE_NAME_MAP.put("99", "ifeq");
+        OPCODE_NAME_MAP.put("9A", "ifne");
+        OPCODE_NAME_MAP.put("9B", "iflt");
+        OPCODE_NAME_MAP.put("9C", "ifge");
+        OPCODE_NAME_MAP.put("9D", "ifgt");
+        OPCODE_NAME_MAP.put("9E", "ifle");
+        OPCODE_NAME_MAP.put("9F", "if_icmpeq");
+        OPCODE_NAME_MAP.put("A0", "if_icmpne");
+        OPCODE_NAME_MAP.put("A1", "if_icmplt");
+        OPCODE_NAME_MAP.put("A2", "if_icmpge");
+        OPCODE_NAME_MAP.put("A3", "if_icmpgt");
+        OPCODE_NAME_MAP.put("A4", "if_icmple");
+        OPCODE_NAME_MAP.put("A5", "if_acmpeq");
+        OPCODE_NAME_MAP.put("A6", "if_acmpne");
+
+        OPCODE_NAME_MAP.put("A7", "goto");
+        OPCODE_NAME_MAP.put("A8", "jsr");
+        OPCODE_NAME_MAP.put("A9", "ret");
+        OPCODE_NAME_MAP.put("AA", "tableswitch");
+        OPCODE_NAME_MAP.put("AB", "lookupswitch");
+        
+        OPCODE_NAME_MAP.put("AC", "ireturn");
+        OPCODE_NAME_MAP.put("AD", "lreturn");
+        OPCODE_NAME_MAP.put("AE", "freturn");
+        OPCODE_NAME_MAP.put("AF", "dreturn");
+        OPCODE_NAME_MAP.put("B0", "areturn");
+        OPCODE_NAME_MAP.put("B1", "return");
+
+        // Field & Method
+        OPCODE_NAME_MAP.put("B2", "getstatic");
+        OPCODE_NAME_MAP.put("B3", "putstatic");
+        OPCODE_NAME_MAP.put("B4", "getfield");
+        OPCODE_NAME_MAP.put("B5", "putfield");
+        OPCODE_NAME_MAP.put("B6", "invokevirtual");
+        OPCODE_NAME_MAP.put("B7", "invokespecial");
+        OPCODE_NAME_MAP.put("B8", "invokestatic");
+        OPCODE_NAME_MAP.put("B9", "invokeinterface");
+        OPCODE_NAME_MAP.put("BA", "invokedynamic");
+
+        // Object
+        OPCODE_NAME_MAP.put("BB", "new");
+        OPCODE_NAME_MAP.put("BC", "newarray");
+        OPCODE_NAME_MAP.put("BD", "anewarray");
+        OPCODE_NAME_MAP.put("BE", "arraylength");
+        OPCODE_NAME_MAP.put("BF", "athrow");
+
+        // Extended
+        OPCODE_NAME_MAP.put("C0", "checkcast");
+        OPCODE_NAME_MAP.put("C1", "instanceof");
+        OPCODE_NAME_MAP.put("C2", "monitorenter");
+        OPCODE_NAME_MAP.put("C3", "monitorexit");
+        OPCODE_NAME_MAP.put("C4", "wide");
+        OPCODE_NAME_MAP.put("C5", "multianewarray");
+        OPCODE_NAME_MAP.put("C6", "ifnull");
+        OPCODE_NAME_MAP.put("C7", "ifnonnull");
+        OPCODE_NAME_MAP.put("C8", "goto_w");
+        OPCODE_NAME_MAP.put("C9", "jsr_w");
+    }
+}

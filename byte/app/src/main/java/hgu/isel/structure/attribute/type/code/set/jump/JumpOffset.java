@@ -3,6 +3,8 @@ package hgu.isel.structure.attribute.type.code.set.jump;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.google.gson.JsonObject;
+
 /**
  * This class supports the structure of the JVM bytecodes.
  * By overriding the toString(), tokenize() methods, it can analyze / tokenize the bytecodes.
@@ -18,11 +20,11 @@ public class JumpOffset {
     public String toString() {
         StringBuilder stringBuilder = new StringBuilder();
 
+        stringBuilder.append("<Start Entry><Start>offset:");
         for(byte b : info) {
             stringBuilder.append(String.format("%02X", b));
         }
-
-
+        stringBuilder.append("<End><End Entry>\n");
 
         return stringBuilder.toString();
     }
@@ -31,7 +33,7 @@ public class JumpOffset {
     public List<String> tokenize() {
         List<String> output = new ArrayList<>();
         StringBuilder stringBuilder = new StringBuilder();
-        // output.add("[Jump Offset Information]");
+        output.add("[Jump Offset Information]");
 
         for(byte b : info) {
             stringBuilder.append(String.format("%02X", b));
@@ -40,5 +42,11 @@ public class JumpOffset {
 
 
         return output;
+    }
+
+    public JsonObject toJson() {
+        JsonObject json = new JsonObject();
+        json.addProperty("offset", toString());
+        return json;
     }
 }

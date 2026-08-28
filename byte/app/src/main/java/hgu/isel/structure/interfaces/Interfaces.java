@@ -1,7 +1,5 @@
 package hgu.isel.structure.interfaces;
 
-import hgu.isel.structure.attribute.AttributeInformation;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -27,12 +25,15 @@ public class Interfaces {
     }
     public String toString() {
         StringBuilder stringBuilder = new StringBuilder();
+        stringBuilder.append("<Start Entry>");
+        stringBuilder.append("<Start>--- Type:").append(getClass().getSimpleName()).append("<End>\n");
 
-        stringBuilder.append("\n    - Interface: ");
-
+        stringBuilder.append("<Start>Interface:");
         for(byte b : bytes) {
             stringBuilder.append(String.format("%02X", b));
         }
+        stringBuilder.append("<End>\n");
+        stringBuilder.append("<End Entry>\n");
 
         return stringBuilder.toString();
     }

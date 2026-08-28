@@ -1,9 +1,7 @@
 package hgu.isel.structure.attribute.type.code.set;
 
-import hgu.isel.structure.attribute.type.code.Instruction;
+import hgu.isel.structure.attribute.type.code.AbstractInstruction;
 
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * This class supports the structure of the JVM bytecodes.
@@ -11,38 +9,10 @@ import java.util.List;
  * <p>
  * All getters and setters in this class are simple property accessors with no side effects.
  */
-public class DuplicateTopOperandStackValueAndInsertThreeValuesInstruction implements Instruction {
+public class DuplicateTopOperandStackValueAndInsertThreeValuesInstruction extends AbstractInstruction {
     private byte format;
 
     public DuplicateTopOperandStackValueAndInsertThreeValuesInstruction(byte format) {
         this.format = format;
-    }
-
-    public byte getFormat() {
-        return format;
-    }
-
-    public void setFormat(byte format) {
-        this.format = format;
-    }
-    public String toString() {
-        StringBuilder stringBuilder = new StringBuilder();
-
-        stringBuilder.append("\n            - dup_x2 instruction: ");
-
-        stringBuilder.append(String.format("%02X", format));
-
-
-        return stringBuilder.toString();
-    }
-    @Override
-    public List<String> tokenize() {
-        List<String> output = new ArrayList<>();
-        StringBuilder stringBuilder = new StringBuilder();
-        // output.add("[Duplicate Top Operand Stack Value Instruction]");
-        stringBuilder.append(String.format("%02X", format));
-
-        output.add(stringBuilder.toString());
-        return output;
     }
 }

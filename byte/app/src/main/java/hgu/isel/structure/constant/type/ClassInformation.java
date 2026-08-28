@@ -1,7 +1,6 @@
 package hgu.isel.structure.constant.type;
 
 
-import hgu.isel.structure.attribute.type.annotation.elemet.union.Annotation;
 import hgu.isel.structure.constant.ConstantPoolInformation;
 
 import java.util.ArrayList;

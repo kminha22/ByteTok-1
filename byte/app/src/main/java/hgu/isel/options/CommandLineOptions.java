@@ -22,6 +22,12 @@ public class CommandLineOptions {
                 .desc("analyze input class file / 1) input path")
                 .build();
 
+        Option json = Option.builder("j")
+                .longOpt("json")
+                .hasArgs() 
+                .desc("Save JSON output of Code attribute / 1) input path")
+                .build();
+
         Option remove = Option.builder("r")
                 .longOpt("remove")
                 .hasArgs()
@@ -67,6 +73,7 @@ public class CommandLineOptions {
 
         options.addOption(vocab);
         options.addOption(tokenize);
+        options.addOption(json);
         options.addOption(remove);
         options.addOption(generate);
         options.addOption(delete);

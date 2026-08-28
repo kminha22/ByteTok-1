@@ -1,7 +1,13 @@
 package hgu.isel.tokenizer;
 
+import java.nio.charset.StandardCharsets;
+
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
+
 import hgu.isel.structure.attribute.AttributeInformation;
 import hgu.isel.structure.constant.ConstantPoolInformation;
+import hgu.isel.structure.constant.type.UTF8Information;
 import hgu.isel.structure.field.FieldInformation;
 import hgu.isel.structure.interfaces.Interfaces;
 import hgu.isel.structure.method.MethodInformation;
@@ -185,4 +191,5 @@ public class ByteStructure {
     public void setFileName(String fileName) {
         this.fileName = fileName;
     }
+
 }

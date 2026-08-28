@@ -1,9 +1,6 @@
 package hgu.isel.structure.attribute.type.code.set;
 
-import hgu.isel.structure.attribute.type.code.Instruction;
-
-import java.util.ArrayList;
-import java.util.List;
+import hgu.isel.structure.attribute.type.code.AbstractInstruction;
 
 /**
  * This class supports the structure of the JVM bytecodes.
@@ -11,80 +8,17 @@ import java.util.List;
  * <p>
  * All getters and setters in this class are simple property accessors with no side effects.
  */
-public class WideInstruction implements Instruction {
+public class WideInstruction extends AbstractInstruction {
     private byte format;
-    private byte opCode;
-    private byte indexByte1;
-    private byte indexByte2;
+    private byte wide_opcode;
+    private byte local_variable_index_1;
+    private byte local_variable_index_2;
 
     public WideInstruction(byte format, byte opCode, byte indexByte1, byte indexByte2) {
         this.format = format;
-        this.opCode = opCode;
-        this.indexByte1 = indexByte1;
-        this.indexByte2 = indexByte2;
+        this.wide_opcode = opCode;
+        this.local_variable_index_1 = indexByte1;
+        this.local_variable_index_2 = indexByte2;
     }
 
-    public byte getFormat() {
-        return format;
-    }
-
-    public void setFormat(byte format) {
-        this.format = format;
-    }
-
-    public byte getOpCode() {
-        return opCode;
-    }
-
-    public void setOpCode(byte opCode) {
-        this.opCode = opCode;
-    }
-
-    public byte getIndexByte1() {
-        return indexByte1;
-    }
-
-    public void setIndexByte1(byte indexByte1) {
-        this.indexByte1 = indexByte1;
-    }
-
-    public byte getIndexByte2() {
-        return indexByte2;
-    }
-
-    public void setIndexByte2(byte indexByte2) {
-        this.indexByte2 = indexByte2;
-    }
-    public String toString() {
-        StringBuilder stringBuilder = new StringBuilder();
-
-        stringBuilder.append("\n             - wide instruction: ");
-
-        stringBuilder.append(String.format("%02X", format));
-        stringBuilder.append(String.format("%02X", opCode));
-        stringBuilder.append(String.format("%02X", indexByte1));
-        stringBuilder.append(String.format("%02X", indexByte2));
-
-
-
-        return stringBuilder.toString();
-    }
-
-    @Override
-    public List<String> tokenize() {
-        List<String> output = new ArrayList<>();
-        StringBuilder stringBuilder = new StringBuilder();
-        // output.add("[Wide Instruction]");
-        stringBuilder.append(String.format("%02X", format));
-        stringBuilder.append(String.format("%02X", opCode));
-        stringBuilder.append(String.format("%02X", indexByte1));
-        stringBuilder.append(String.format("%02X", indexByte2));
-
-
-        output.add(stringBuilder.toString());
-
-
-
-        return output;
-    }
 }

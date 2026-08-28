@@ -69,28 +69,39 @@ public class FieldInformation {
     public String toString() {
         StringBuilder stringBuilder = new StringBuilder();
 
-        stringBuilder.append("\n    Field: ");
+        stringBuilder.append("<Start Entry>");
+        stringBuilder.append("<Start>--- Type:").append(getClass().getSimpleName()).append("<End>\n");
 
-
+        stringBuilder.append("<Start>Access Flags:");
         for(byte b : accessFlags) {
             stringBuilder.append(String.format("%02X", b));
         }
+        stringBuilder.append("<End>\n");
 
+        stringBuilder.append("<Start>Name Index:");
         for(byte b : nameIndex) {
             stringBuilder.append(String.format("%02X", b));
         }
+        stringBuilder.append("<End>\n");
 
+        stringBuilder.append("<Start>Descriptor Index:");
         for(byte b : descriptorIndex) {
             stringBuilder.append(String.format("%02X", b));
         }
+        stringBuilder.append("<End>\n");
 
+        stringBuilder.append("<Start>Attributes Count:");
         for(byte b : attributesCount) {
             stringBuilder.append(String.format("%02X", b));
         }
+        stringBuilder.append("<End>\n");
 
+        stringBuilder.append("<Start>Attribute Information:[");
         for(AttributeInformation a : attributes) {
             stringBuilder.append(a.toString());
         }
+        stringBuilder.append("]<End>\n");
+        stringBuilder.append("<End Entry>\n");
 
         return stringBuilder.toString();
     }

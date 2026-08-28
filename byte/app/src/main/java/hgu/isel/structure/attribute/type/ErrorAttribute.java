@@ -1,9 +1,9 @@
-package hgu.isel.structure.attribute.type.target;
+package hgu.isel.structure.attribute.type;
 
-import java.lang.reflect.Field;
+import hgu.isel.structure.attribute.AttributeInformation;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.lang.reflect.Field;
 
 /**
  * This class supports the structure of the JVM bytecodes.
@@ -11,21 +11,45 @@ import java.util.List;
  * <p>
  * All getters and setters in this class are simple property accessors with no side effects.
  */
-public class TypeParameterTarget implements TargetInformation{
-    private byte typeParameterIndex;
-
-    public byte getTypeParameterIndex() {
-        return typeParameterIndex;
+public class ErrorAttribute implements AttributeInformation {
+    private byte[] attributeNameIndex; // u2
+    private byte[] attributeLength; // u4
+    private byte[] attributes;
+    @Override
+    public List<String> tokenize() {
+        return null;
     }
 
-    public void setTypeParameterIndex(byte typeParameterIndex) {
-        this.typeParameterIndex = typeParameterIndex;
+    public byte[] getAttributeNameIndex() {
+        return attributeNameIndex;
     }
 
-    public TypeParameterTarget(byte typeParameterIndex) {
-        this.typeParameterIndex = typeParameterIndex;
+    public void setAttributeNameIndex(byte[] attributeNameIndex) {
+        this.attributeNameIndex = attributeNameIndex;
     }
 
+    public byte[] getAttributeLength() {
+        return attributeLength;
+    }
+
+    public void setAttributeLength(byte[] attributeLength) {
+        this.attributeLength = attributeLength;
+    }
+
+    public byte[] getAttributes() {
+        return attributes;
+    }
+
+    public void setAttributes(byte[] attributes) {
+        this.attributes = attributes;
+    }
+
+    public ErrorAttribute(byte[] attributeNameIndex, byte[] attributeLength, byte[] attributes) {
+        this.attributeNameIndex = attributeNameIndex;
+        this.attributeLength = attributeLength;
+        this.attributes = attributes;
+    }
+    
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
@@ -77,17 +101,5 @@ public class TypeParameterTarget implements TargetInformation{
         StringBuilder sb = new StringBuilder();
         for (byte b : bytes) sb.append(String.format("%02X", b));
         return sb.toString();
-    }
-
-    @Override
-    public List<String> tokenize() {
-        List<String> output = new ArrayList<>();
-        StringBuilder stringBuilder = new StringBuilder();
-        // output.add("[Type Parameter Target Parameter Index]");
-        stringBuilder.append(String.format("%02X", typeParameterIndex));
-        output.add(stringBuilder.toString());
-
-
-        return output;
     }
 }

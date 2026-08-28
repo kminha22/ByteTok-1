@@ -1,13 +1,14 @@
 package hgu.isel.structure.attribute.type;
 
 import hgu.isel.structure.attribute.AttributeInformation;
-import hgu.isel.structure.attribute.type.boot.BootstrapMethodInformation;
 import hgu.isel.structure.attribute.type.code.CodeAttributeAnalyzer;
 import hgu.isel.structure.attribute.type.code.Instruction;
 import hgu.isel.structure.attribute.type.exception.ExceptionTable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.lang.reflect.Field;
+
 
 /**
  * This class supports the structure of the JVM bytecodes.
@@ -125,53 +126,58 @@ public class Code implements AttributeInformation {
 
         this.code = codeAttributeAnalyzer.getInstructions();
     }
+    
+    @Override
     public String toString() {
-        StringBuilder stringBuilder = new StringBuilder();
+        StringBuilder sb = new StringBuilder();
+        sb.append("<Start Entry>");
+        sb.append("<Start>--- Type:").append(getClass().getSimpleName()).append("<End>\n");
 
-        stringBuilder.append("\n        - Code: ");
+        for (Field field : this.getClass().getDeclaredFields()) {
+            field.setAccessible(true);
+            try {
+                Object value = field.get(this);
+                if (value == null) continue;
 
-        for(byte b : attributeNameIndex) {
-            stringBuilder.append(String.format("%02X", b));
+                sb.append("<Start>")
+                .append(field.getName())
+                .append(":");
+
+                if (value instanceof Byte) {
+                    sb.append(String.format("%02X", value));
+                } else if (value instanceof byte[]) {
+                    sb.append(bytesToHex((byte[]) value));
+                } else if (value.getClass().isArray()) {
+                    // 배열 처리
+                    Object[] arr = (Object[]) value;
+                    sb.append("[");
+                    for (int i = 0; i < arr.length; i++) {
+                        Object elem = arr[i];
+                        if (elem != null) {
+                            sb.append(elem.toString()); // 각 객체의 toString() 호출
+                        } else {
+                            sb.append("null");
+                        }
+                    }
+                    sb.append("]");
+                } else {
+                    sb.append(value.toString());
+                }
+
+                sb.append("<End>");
+            } catch (IllegalAccessException e) {
+                // 무시
+            }
         }
 
-        for(byte b : attributeLength) {
-            stringBuilder.append(String.format("%02X", b));
-        }
+        sb.append("<End Entry>");
+        return sb.toString();
+    }
 
-        for(byte b : maxStack) {
-            stringBuilder.append(String.format("%02X", b));
-        }
-
-        for(byte b : maxLocals) {
-            stringBuilder.append(String.format("%02X", b));
-        }
-
-        for(byte b : codeLength) {
-            stringBuilder.append(String.format("%02X", b));
-        }
-
-        for(Instruction b : code) {
-            stringBuilder.append(b.toString());
-        }
-
-        for(byte b : exceptionTableLength) {
-            stringBuilder.append(String.format("%02X", b));
-        }
-
-        for(ExceptionTable e : exceptionTable) {
-            stringBuilder.append(e.toString());
-        }
-
-        for(byte b : attributesCount) {
-            stringBuilder.append(String.format("%02X", b));
-        }
-
-        for(AttributeInformation a : attributes) {
-            stringBuilder.append(a.toString());
-        }
-
-
-        return stringBuilder.toString();
+    private static String bytesToHex(byte[] bytes) {
+        StringBuilder sb = new StringBuilder();
+        for (byte b : bytes) sb.append(String.format("%02X", b));
+        return sb.toString();
     }
 
     @Override
@@ -216,7 +222,7 @@ public class Code implements AttributeInformation {
         stringBuilder.setLength(0);
 
         for(Instruction i : code) {
-            output.addAll(i.tokenize());
+            output.addAll(i.tokenize(false, " = "));
         }
 
         // output.add("[Code Attribute Exception Table Length]");
@@ -244,4 +250,5 @@ public class Code implements AttributeInformation {
 
         return output;
     }
+
 }

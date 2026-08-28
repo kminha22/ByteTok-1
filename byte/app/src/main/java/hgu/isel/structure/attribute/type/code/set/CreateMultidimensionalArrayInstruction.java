@@ -1,9 +1,6 @@
 package hgu.isel.structure.attribute.type.code.set;
 
-import hgu.isel.structure.attribute.type.code.Instruction;
-
-import java.util.ArrayList;
-import java.util.List;
+import hgu.isel.structure.attribute.type.code.AbstractInstruction;
 
 /**
  * This class supports the structure of the JVM bytecodes.
@@ -11,78 +8,16 @@ import java.util.List;
  * <p>
  * All getters and setters in this class are simple property accessors with no side effects.
  */
-public class CreateMultidimensionalArrayInstruction implements Instruction {
+public class CreateMultidimensionalArrayInstruction extends AbstractInstruction {
     private byte format;
-    private byte indexByte1;
-    private byte indexByte2;
-    private byte dimensions;
+    private byte constant_pool_index_1;
+    private byte constant_pool_index_2;
+    private byte immediate_value_dimensions;
 
     public CreateMultidimensionalArrayInstruction(byte format, byte indexByte1, byte indexByte2, byte dimensions) {
         this.format = format;
-        this.indexByte1 = indexByte1;
-        this.indexByte2 = indexByte2;
-        this.dimensions = dimensions;
-    }
-
-    public byte getFormat() {
-        return format;
-    }
-
-    public void setFormat(byte format) {
-        this.format = format;
-    }
-
-    public byte getIndexByte1() {
-        return indexByte1;
-    }
-
-    public void setIndexByte1(byte indexByte1) {
-        this.indexByte1 = indexByte1;
-    }
-
-    public byte getIndexByte2() {
-        return indexByte2;
-    }
-
-    public void setIndexByte2(byte indexByte2) {
-        this.indexByte2 = indexByte2;
-    }
-
-    public byte getDimensions() {
-        return dimensions;
-    }
-
-    public void setDimensions(byte dimensions) {
-        this.dimensions = dimensions;
-    }
-    public String toString() {
-        StringBuilder stringBuilder = new StringBuilder();
-
-        stringBuilder.append("\n            - multianewarray instruction: ");
-
-        stringBuilder.append(String.format("%02X", format));
-        stringBuilder.append(String.format("%02X", indexByte1));
-        stringBuilder.append(String.format("%02X", indexByte2));
-        stringBuilder.append(String.format("%02X", dimensions));
-
-        return stringBuilder.toString();
-    }
-
-    @Override
-    public List<String> tokenize() {
-        List<String> output = new ArrayList<>();
-
-        StringBuilder stringBuilder = new StringBuilder();
-        // output.add("[Create Multi Dimensional Array Instruction]");
-        stringBuilder.append(String.format("%02X", format));
-        stringBuilder.append(String.format("%02X", indexByte1));
-        stringBuilder.append(String.format("%02X", indexByte2));
-        stringBuilder.append(String.format("%02X", dimensions));
-
-        output.add(stringBuilder.toString());
-
-
-
-        return output;
+        this.constant_pool_index_1 = indexByte1;
+        this.constant_pool_index_2 = indexByte2;
+        this.immediate_value_dimensions = dimensions;
     }
 }
