@@ -7,6 +7,7 @@ import hgu.isel.structure.BaseBytecodeStructure;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public abstract class AbstractInstruction extends BaseBytecodeStructure implements Instruction {
 
@@ -20,15 +21,29 @@ public abstract class AbstractInstruction extends BaseBytecodeStructure implemen
     // ==========================================
     @Override
     public JsonElement toJson() {
-        JsonObject json = (JsonObject) super.toJson();
-        
-        // 'format' 필드가 존재하면 Mnemonic을 찾아서 추가
+        JsonObject originalJson = (JsonObject) super.toJson();
+        JsonObject resultJson = new JsonObject();
+
         String mnemonic = extractMnemonic();
-        if (mnemonic != null) {
-            json.addProperty("--- Mnemonic", mnemonic);
-        }
         
-        return json;
+        // --- Type 값을 니모닉으로 덮어쓰거나 최상단에 배치
+        if (!"unknown".equals(mnemonic)) {
+            resultJson.addProperty("--- Type", mnemonic);
+        } else {
+            // 니모닉을 못 찾은 경우 기존 클래스명 유지
+            if (originalJson.has("--- Type")) {
+                resultJson.add("--- Type", originalJson.get("--- Type"));
+            }
+        }
+
+        // 기존 필드 중 --- Type을 제외한 나머지 복사
+        originalJson.entrySet().forEach(entry -> {
+            if (!"--- Type".equals(entry.getKey())) {
+                resultJson.add(entry.getKey(), entry.getValue());
+            }
+        });
+
+        return resultJson;
     }
 
     // ==========================================
@@ -104,22 +119,15 @@ public abstract class AbstractInstruction extends BaseBytecodeStructure implemen
             Field formatField = getClass().getDeclaredField("format");
             formatField.setAccessible(true);
             Object value = formatField.get(this);
-            
-            if (value instanceof byte[]) {
-                byte[] bytes = (byte[]) value;
-                if (bytes.length > 0) {
-                    String opcodeHex = String.format("%02X", bytes[0]);
-                    return OpcodeTable.OPCODE_NAME_MAP.getOrDefault(opcodeHex, "unknown");
-                }
-            } else if (value != null) {
-                String hex = value.toString();
-                if (hex.length() >= 2) {
-                    return OpcodeTable.OPCODE_NAME_MAP.getOrDefault(hex.substring(0, 2), "unknown");
-                }
+
+            if (value instanceof Byte) {
+                // 단일 byte를 2자리 16진수 대문자 문자열로 변환하여 바로 매핑
+                String opcodeHex = String.format("%02X", (Byte) value);
+                return OpcodeTable.OPCODE_NAME_MAP.getOrDefault(opcodeHex, "unknown");
             }
         } catch (NoSuchFieldException | IllegalAccessException ignored) {
-            // format 필드가 없는 명령어 객체는 무시
+            // format 필드가 없는 경우 무시
         }
-        return null;
+        return "unknown";
     }
 }

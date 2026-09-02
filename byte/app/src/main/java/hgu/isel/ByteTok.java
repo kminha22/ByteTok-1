@@ -14,6 +14,7 @@ import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.ParseException;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -61,6 +62,30 @@ public class ByteTok {
                 String outDir = tokenizeArgs[1];
                 
                 saveJson(classFile, outDir);
+
+            } else if (cmd.hasOption("jd")) {
+               
+                String[] tokenizeArgs = cmd.getOptionValues("jd");
+                String classListFile = tokenizeArgs[0];
+                String outDir = tokenizeArgs[1];
+
+                try (BufferedReader br = new BufferedReader(new FileReader(classListFile))) {
+                    String line;
+                    while ((line = br.readLine()) != null) {
+                        String classFile = line.trim();
+                        String base = new File(classFile).getName().replace(".class", "");
+                        File jsonFile = new File(outDir, base + ".json");
+
+                        // 이미 JSON이 있으면 건너뛰기
+                        if (jsonFile.exists()) {
+                            continue;
+                        }
+
+                        saveJson(classFile, outDir);
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
 
             } else if(cmd.hasOption("r")) {
 

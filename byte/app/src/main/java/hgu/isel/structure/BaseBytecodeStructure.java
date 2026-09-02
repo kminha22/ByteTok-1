@@ -43,7 +43,7 @@ public abstract class BaseBytecodeStructure implements JsonSerializable {
     }
 
     // ==========================================
-    // 2. 공통 toJson() 구현 (UTF8 자동 디코딩 포함)
+    // 2. 공통 toJson() 구현 
     // ==========================================
     @Override
     public JsonElement toJson() {
@@ -59,12 +59,6 @@ public abstract class BaseBytecodeStructure implements JsonSerializable {
 
                 String fieldName = field.getName();
                 json.add(fieldName, convertToJsonElement(value));
-
-                // UTF8/bytes 필드 자동 디코딩 조건문
-                if (value instanceof byte[] && ("bytes".equals(fieldName) || "UTF8Information".equals(getClass().getSimpleName()))) {
-                    String decoded = new String((byte[]) value, StandardCharsets.UTF_8);
-                    json.addProperty("--- Decoded String", decoded);
-                }
 
             } catch (IllegalAccessException ignored) {}
         }
