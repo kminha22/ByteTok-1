@@ -1,13 +1,14 @@
 package hgu.isel.structure.constant;
 
-import java.util.List;
 import java.util.Map;
+
+import hgu.isel.structure.JsonSerializable;
+
 import java.util.LinkedHashMap;
 import java.lang.reflect.Field;
 
 
-public interface ConstantPoolInformation {
-    List<String> tokenize(int index);
+public interface ConstantPoolInformation extends JsonSerializable{
 
     default public Map<String, String> getFields() {
         Map<String, String> fields = new LinkedHashMap<>();

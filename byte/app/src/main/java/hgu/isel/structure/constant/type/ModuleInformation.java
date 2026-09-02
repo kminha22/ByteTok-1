@@ -1,9 +1,8 @@
 package hgu.isel.structure.constant.type;
 
+import hgu.isel.structure.BaseBytecodeStructure;
 import hgu.isel.structure.constant.ConstantPoolInformation;
 
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * This class supports the structure of the JVM bytecodes.
@@ -11,7 +10,7 @@ import java.util.List;
  * <p>
  * All getters and setters in this class are simple property accessors with no side effects.
  */
-public class ModuleInformation implements ConstantPoolInformation {
+public class ModuleInformation extends BaseBytecodeStructure implements ConstantPoolInformation {
     private byte tag;
     private byte[] nameIndex; // u2
 
@@ -34,38 +33,5 @@ public class ModuleInformation implements ConstantPoolInformation {
     public ModuleInformation(byte tag, byte[] nameIndex) {
         this.tag = tag;
         this.nameIndex = nameIndex;
-    }
-    public String toString() {
-        StringBuilder stringBuilder = new StringBuilder();
-
-        stringBuilder.append("\n    - ModuleInformation: ");
-        stringBuilder.append(String.format("%02X", tag));
-
-        for(byte b : nameIndex) {
-            stringBuilder.append(String.format("%02X", b));
-        }
-
-        return stringBuilder.toString();
-    }
-
-    @Override
-    public List<String> tokenize(int index) {
-        List<String> output = new ArrayList<>();
-        // output.add(String.valueOf(index));
-        StringBuilder stringBuilder = new StringBuilder();
-
-        // output.add("[Constant Module Tag]");
-        stringBuilder.append(String.format("%02X", tag));
-        output.add(stringBuilder.toString());
-        stringBuilder.setLength(0);
-
-        // output.add("[Constant Module Name Index]");
-        // for(byte b : nameIndex) {
-        //     stringBuilder.append(String.format("%02X", b));
-        // }
-        // output.add(stringBuilder.toString());
-
-
-        return output;
     }
 }

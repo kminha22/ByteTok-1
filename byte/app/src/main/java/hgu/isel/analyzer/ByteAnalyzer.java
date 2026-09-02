@@ -51,6 +51,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.HashSet;
 
+
 /**
  * The ByteAnalyzer class can analyze the entire structure of the input bytecode.
  * In addition, it can divide whole sections of the bytecode by using the JVM 23 official document.
@@ -90,6 +91,7 @@ public class ByteAnalyzer {
         this.bytes = bytes;
     }
 
+
     /**
      * This method is used to generate String values of the result of analyzing bytecode.
      * It can merge the whole result data structures of the bytecode to one String value by using the StringBuilder.
@@ -99,107 +101,7 @@ public class ByteAnalyzer {
      * @return The return value contains single String value which is representing the entire architecture of the bytecode.
      */
     public String printResult() {
-        StringBuilder stringBuilder = new StringBuilder();
-
-        stringBuilder.append("<Start>Magic Number:");
-        for(byte b : magic) {
-            stringBuilder.append(String.format("%02X", b));
-        }
-        stringBuilder.append("<End>\n");
-
-        stringBuilder.append("<Start>Minor Version:");
-        for(byte b : minorVersion) {
-            stringBuilder.append(String.format("%02X", b));
-        }
-        stringBuilder.append("<End>\n");
-
-        stringBuilder.append("<Start>Major Version:");
-        for(byte b : majorVersion) {
-            stringBuilder.append(String.format("%02X", b));
-        }
-        stringBuilder.append("<End>\n");
-
-        stringBuilder.append("<Start>Constant Pool Count:");
-        for(byte b : constantPoolCount) {
-            stringBuilder.append(String.format("%02X", b));
-        }
-        stringBuilder.append("<End>\n");
-
-        stringBuilder.append("<Start>Constant Pool:[");
-        for(ConstantPoolInformation c : constantPoolInformation) {
-            if(c != null) {
-                stringBuilder.append(c.toCustomString());
-            }
-        }
-        stringBuilder.append("]<End>\n");
-
-        stringBuilder.append("<Start>Access Flag:");
-        for(byte b : accessFlag) {
-            stringBuilder.append(String.format("%02X", b));
-        }
-        stringBuilder.append("<End>\n");
-
-        stringBuilder.append("<Start>This Class:");
-        for(byte b : thisClass) {
-            stringBuilder.append(String.format("%02X", b));
-        }
-        stringBuilder.append("<End>\n");
-
-        stringBuilder.append("<Start>Super Class:");
-        for(byte b : superClass) {
-            stringBuilder.append(String.format("%02X", b));
-        }
-        stringBuilder.append("<End>\n");
-
-        stringBuilder.append("<Start>Interface Count:");
-        for(byte b : interfacesCount) {
-            stringBuilder.append(String.format("%02X", b));
-        }
-        stringBuilder.append("<End>\n");
-
-        stringBuilder.append("<Start>Interfaces:[");
-        for(Interfaces i : interfaces) {
-            stringBuilder.append(i.toString());
-        }
-        stringBuilder.append("]<End>\n");
-
-        stringBuilder.append("<Start>Fields Count:");
-        for(byte b : fieldsCount) {
-            stringBuilder.append(String.format("%02X", b));
-        }
-        stringBuilder.append("<End>\n");
-
-        stringBuilder.append("<Start>Fields:[");
-        for(FieldInformation f : fieldInformation) {
-            stringBuilder.append(f.toString());
-        }
-        stringBuilder.append("]<End>\n");
-
-        stringBuilder.append("<Start>Methods Count:");
-        for(byte b : methodsCount) {
-            stringBuilder.append(String.format("%02X", b));
-        }
-        stringBuilder.append("<End>\n");
-
-        stringBuilder.append("<Start>Methods:[");
-        for(MethodInformation m : methodInformation) {
-            stringBuilder.append(m.toString());
-        }
-        stringBuilder.append("]<End>\n");
-
-        stringBuilder.append("<Start>Attributes Count:");
-        for(byte b : attributesCount) {
-            stringBuilder.append(String.format("%02X", b));
-        }
-        stringBuilder.append("<End>\n");
-
-        stringBuilder.append("<Start>Attributes:[");
-        for(AttributeInformation a : attributeInformation) {
-            stringBuilder.append(a.toString());
-        }
-        stringBuilder.append("]<End>\n");
-
-        return stringBuilder.toString();
+        return super.toString();
 
     }
 
@@ -639,7 +541,6 @@ public class ByteAnalyzer {
             throw new RuntimeException("Offset out of range: offset=" + offset + " / bytes.length=" + bytes.length);
         }
 
-        int before = offset;
         int utf8Index = ((bytes[offset] & 0xFF) << 8) | (bytes[offset + 1] & 0xFF);
 
         UTF8Information utf8Information = (UTF8Information) constantPoolInformation[utf8Index - 1];
@@ -1450,7 +1351,7 @@ public class ByteAnalyzer {
 
         byte targetType = bytes[offset];
         offset += 1;
-        TargetInformation targetInformation;
+        AttributeInformation targetInformation;
 
         byte[] tableLength;
         int tableLengthInteger;

@@ -30,7 +30,6 @@ public class CodeAttributeAnalyzer {
             int opcode = format & 0xFF;
             offset += 1;
 
-            int currentOffset;
             int padding;
             byte[] paddingBytes;
             byte[] defaultByte;

@@ -14,7 +14,6 @@ import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.ParseException;
 
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -26,8 +25,7 @@ import java.nio.file.StandardOpenOption;
 import java.util.*;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 
 public class ByteTok {
     private static HashSet<String> customAttributes = new HashSet<>();
@@ -57,29 +55,14 @@ public class ByteTok {
                 String[] tokenizeArgs = cmd.getOptionValues("a");
                 analyze(tokenizeArgs[0]);
 
-         } else if (cmd.hasOption("j")) {
-            String[] tokenizeArgs = cmd.getOptionValues("j");
-            String classListFile = tokenizeArgs[0];
-            String outDir = tokenizeArgs[1];
+            } else if (cmd.hasOption("j")) {
+                String[] tokenizeArgs = cmd.getOptionValues("j");
+                String classFile = tokenizeArgs[0];
+                String outDir = tokenizeArgs[1];
+                
+                saveJson(classFile, outDir);
 
-            try (BufferedReader br = new BufferedReader(new FileReader(classListFile))) {
-                String line;
-                while ((line = br.readLine()) != null) {
-                    String classFile = line.trim();
-                    String base = new File(classFile).getName().replace(".class", "");
-                    File jsonFile = new File(outDir, base + ".json");
-
-                    // 이미 JSON이 있으면 건너뛰기
-                    if (jsonFile.exists()) {
-                        continue;
-                    }
-
-                    saveJson(classFile, outDir);
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        } else if(cmd.hasOption("r")) {
+            } else if(cmd.hasOption("r")) {
 
                 String[] removeArgs = cmd.getOptionValues("r");
                 String inputPath = removeArgs[0];
@@ -208,7 +191,7 @@ public class ByteTok {
         ByteStructure byteStructure = null;
         try {
             byteStructure = byteAnalyzer.analyze();
-            String resultText = byteAnalyzer.printResult();
+            String resultText = byteStructure.toString();
 
             String normalizedPath = path.replace("\\", "/"); 
             String key = "resources/";
@@ -250,10 +233,9 @@ public class ByteTok {
 
         ByteAnalyzer byteAnalyzer = new ByteAnalyzer(bytes);
         try {
+            // 1. byteAnalyzer.analyze()를 통해 ByteStructure '객체(인스턴스)'를 얻음
             ByteStructure byteStructure = byteAnalyzer.analyze();
-            String resultText = byteAnalyzer.printResult();
 
-            // 원본 파일명 그대로 사용
             String classFileName = Paths.get(path).getFileName().toString();
             String jsonFileName = classFileName.replace(".class", ".json");
 
@@ -261,14 +243,15 @@ public class ByteTok {
             Files.createDirectories(outputDir);
             Path outputPath = outputDir.resolve(jsonFileName);
 
-            // JSON 변환
             Gson gson = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
-            JsonObject json = buildJson(resultText);
+            
+            // 2. 클래스명(ByteStructure)이 아닌 변수명(byteStructure)으로 toJson() 호출!
+            JsonElement jsonElement = byteStructure.toJson();
 
             Files.write(outputPath,
-                        gson.toJson(json).getBytes(StandardCharsets.UTF_8),
-                        StandardOpenOption.CREATE,
-                        StandardOpenOption.TRUNCATE_EXISTING);
+                    gson.toJson(jsonElement).getBytes(StandardCharsets.UTF_8),
+                    StandardOpenOption.CREATE,
+                    StandardOpenOption.TRUNCATE_EXISTING);
 
             if (Files.exists(outputPath)) {
                 System.out.println("File saved : " + outputPath.toAbsolutePath());
@@ -281,122 +264,6 @@ public class ByteTok {
         }
     }
 
-
-
-    private JsonObject buildJson(String text) {
-        JsonObject root = new JsonObject();
-        Stack<Object> stack = new Stack<>();
-        stack.push(root);
-
-        boolean inStart = false;
-        boolean hasError = false;
-        String currentKey = null;
-        StringBuilder currentValue = new StringBuilder();
-
-        // 이제 [ 와 ] 도 토큰으로 분리됨
-        String[] tokens = text.split("(?=<Start>|<End>|<Start Entry>|<End Entry>|\\[|\\])|(?<=<Start>|<End>|<Start Entry>|<End Entry>|\\\\[|\\\\])");
-
-        for (String token : tokens) {
-            token = token.trim();
-            if (token.isEmpty()) continue;
-            if (token.equals(",")) continue;
-
-            // 디버깅 출력
-           // System.out.println("TOKEN: " + token);
-            // System.out.println("STACK TOP: " + stack.peek().getClass().getSimpleName());
-            // System.out.println("inStart=" + inStart + ", currentKey=" + currentKey + ", currentValue=" + currentValue);
-
-            if (token.equals("<Start Entry>")) {
-                JsonObject entry = new JsonObject();
-                stack.push(entry);
-                // System.out.println(">> New Entry Object pushed");
-            } else if (token.equals("<End Entry>")) {
-                JsonObject entry = (JsonObject) stack.pop();
-                Object parent = stack.peek();
-                // System.out.println(">> End Entry: parent type=" + parent.getClass().getSimpleName());
-                if (parent instanceof JsonArray) {
-                    ((JsonArray) parent).add(entry);
-                    // System.out.println(">> Entry added to parent array, size=" + ((JsonArray) parent).size());
-                } else {
-                    // System.out.println("!! Warning: Parent is not JsonArray, but " + parent.getClass().getSimpleName());
-                }
-            } else if (token.equals("<Start>")) {
-                inStart = true;
-                currentValue.setLength(0);
-                // System.out.println(">> Start detected");
-            } else if (token.equals("<End>")) {
-                inStart = false;
-                if (currentKey != null) {
-                    Object current = stack.peek();
-                    if (current instanceof JsonObject) {
-                        JsonObject obj = (JsonObject) current;
-                        obj.addProperty(currentKey, currentValue.toString().trim());
-                        // System.out.println(">> Key=" + currentKey + " Value=" + currentValue + " added to object");
-                        
-                        // ✅ UTF8Information일 때 bytes 디코딩 추가
-                        if ("bytes".equals(currentKey) 
-                            && obj.has("--- Type") 
-                            && "UTF8Information".equals(obj.get("--- Type").getAsString())) {
-                            String decoded = hexToString(currentValue.toString().trim());
-                            obj.addProperty("--- Decoded String", decoded);
-                        }
-
-                        if (obj.has("--- Type") && "ErrorAttribute".equals(obj.get("--- Type").getAsString())) {
-                            hasError = true;
-                        }
-                    }
-                    currentKey = null;
-                    currentValue.setLength(0);
-                }
-            } else if (token.equals("[")) {
-                if (currentKey != null) {
-                    JsonArray arr = new JsonArray();
-                    ((JsonObject) stack.peek()).add(currentKey, arr);
-                    stack.push(arr);
-                    // System.out.println(">> Array started for key=" + currentKey);
-                    // System.out.println("STACK after push: " + stack);
-                    currentKey = null;
-                } else {
-                    //System.out.println("!! Warning: '[' found but currentKey is null");
-                }
-            } else if (token.equals("]")) {
-                Object closed = stack.pop();
-                if (closed instanceof JsonArray) {
-                    // System.out.println(">> Array closed, size=" + ((JsonArray) closed).size());
-                } else {
-                    // System.out.println("!! Warning: ']' closed non-array: " + closed.getClass().getSimpleName());
-                }
-            } else {
-                // 일반 텍스트 토큰
-                if (inStart) {
-                    if (token.contains(":")) {
-                        String[] parts = token.split(":", 2);
-                        currentKey = parts[0].trim();
-                        currentValue.append(parts[1].trim());
-                        // System.out.println(">> CurrentKey=" + currentKey + " CurrentValue=" + currentValue);
-                    } else {
-                        currentKey = token.replace(":", "").trim();
-                        // System.out.println(">> Array key detected: " + currentKey);
-                    }
-                }
-            }
-        }
-        root.addProperty("error", hasError);
-
-        return root;
-    }
-
-
-
-    private String hexToString(String hex) {
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < hex.length(); i += 2) {
-            String byteStr = hex.substring(i, i + 2);
-            int val = Integer.parseInt(byteStr, 16);
-            sb.append((char) val);
-        }
-        return sb.toString();
-    }
 
     private void remove(String path) {
         ByteReader byteReader = new ByteReader(path);

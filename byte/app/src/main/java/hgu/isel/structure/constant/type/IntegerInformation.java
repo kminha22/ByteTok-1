@@ -1,9 +1,7 @@
 package hgu.isel.structure.constant.type;
 
+import hgu.isel.structure.BaseBytecodeStructure;
 import hgu.isel.structure.constant.ConstantPoolInformation;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * This class supports the structure of the JVM bytecodes.
@@ -11,7 +9,7 @@ import java.util.List;
  * <p>
  * All getters and setters in this class are simple property accessors with no side effects.
  */
-public class IntegerInformation implements ConstantPoolInformation {
+public class IntegerInformation extends BaseBytecodeStructure implements ConstantPoolInformation {
     private byte tag;
     private byte[] bytes; // u4
 
@@ -35,38 +33,5 @@ public class IntegerInformation implements ConstantPoolInformation {
         this.tag = tag;
         this.bytes = bytes;
     }
-    public String toString() {
-        StringBuilder stringBuilder = new StringBuilder();
 
-        stringBuilder.append("\n    - IntegerInformation: ");
-        stringBuilder.append(String.format("%02X", tag));
-
-        for(byte b : bytes) {
-            stringBuilder.append(String.format("%02X", b));
-        }
-
-        return stringBuilder.toString();
-    }
-
-    @Override
-    public List<String> tokenize(int index) {
-        List<String> output = new ArrayList<>();
-        // output.add(String.valueOf(index));
-
-        StringBuilder stringBuilder = new StringBuilder();
-
-        // output.add("[Constant Integer]");
-        stringBuilder.append(String.format("%02X", tag));
-        output.add(stringBuilder.toString());
-        stringBuilder.setLength(0);
-
-        // output.add("[Constant Integer Byte]");
-        // for(byte b : bytes) {
-        //     stringBuilder.append(String.format("%02X", b));
-        // }
-        // output.add(stringBuilder.toString());
-
-
-        return output;
-    }
 }

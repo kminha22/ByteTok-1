@@ -1,8 +1,7 @@
 package hgu.isel.structure.attribute;
 
-import java.util.List;
+import hgu.isel.structure.JsonSerializable;
 
-public interface AttributeInformation {
-    List<String> tokenize();
+public interface AttributeInformation extends JsonSerializable{
 
 }

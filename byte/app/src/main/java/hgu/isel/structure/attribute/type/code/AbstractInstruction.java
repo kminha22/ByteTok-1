@@ -1,97 +1,125 @@
 package hgu.isel.structure.attribute.type.code;
 
-import java.util.List;
-import java.util.Map;
-import java.util.LinkedHashMap;
-import java.util.ArrayList;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import hgu.isel.structure.BaseBytecodeStructure;
+
 import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.List;
 
-
-public abstract class AbstractInstruction implements Instruction {
+public abstract class AbstractInstruction extends BaseBytecodeStructure implements Instruction {
 
     @Override
     public String getTagName() {
         return this.getClass().getSimpleName();
     }
 
+    // ==========================================
+    // 1. Instruction 전용 toJson() (Mnemonic 추가)
+    // ==========================================
     @Override
-    public Map<String, String> getFields() {
-        Map<String, String> fields = new LinkedHashMap<>();
-        for (Field field : this.getClass().getDeclaredFields()) {
+    public JsonElement toJson() {
+        JsonObject json = (JsonObject) super.toJson();
+        
+        // 'format' 필드가 존재하면 Mnemonic을 찾아서 추가
+        String mnemonic = extractMnemonic();
+        if (mnemonic != null) {
+            json.addProperty("--- Mnemonic", mnemonic);
+        }
+        
+        return json;
+    }
+
+    // ==========================================
+    // 2. Instruction 전용 toString() (Mnemonic 포함 formatted 텍스트)
+    // ==========================================
+    @Override
+    public String toString() {
+        return toStringWithIndent(0);
+    }
+
+    @Override
+    protected String toStringWithIndent(int depth) {
+        StringBuilder indent = new StringBuilder("  ".repeat(depth));
+        StringBuilder sb = new StringBuilder();
+        
+        String mnemonic = extractMnemonic();
+        sb.append(getClass().getSimpleName());
+        if (mnemonic != null) {
+            sb.append(" (").append(mnemonic).append(")");
+        }
+        sb.append(" {\n");
+
+        for (Field field : getClass().getDeclaredFields()) {
+            if (java.lang.reflect.Modifier.isStatic(field.getModifiers())) continue;
             field.setAccessible(true);
             try {
                 Object value = field.get(this);
                 if (value == null) continue;
 
-                if (value instanceof Byte) {
-                    fields.put(field.getName(), String.format("%02X", value));
-                } else if (value instanceof byte[]) {
-                    fields.put(field.getName(), bytesToHex((byte[]) value));
-                } else if (value.getClass().isArray()) {
-                    // 배열 처리
-                    Object[] arr = (Object[]) value;
-                    StringBuilder sb = new StringBuilder("[");
-                    for (int i = 0; i < arr.length; i++) {
-                        Object elem = arr[i];
-                        if (elem != null) {
-                            sb.append(elem.toString()); // 각 객체의 toString() 호출
-                        } else {
-                            sb.append("null");
-                        }
-                    }
-                    sb.append("]");
-                    fields.put(field.getName(), sb.toString());
-                } else {
-                    fields.put(field.getName(), value.toString());
-                }
-
-            } catch (IllegalAccessException e) {
-                // 무시
-            }
+                sb.append(indent).append("  ").append(field.getName()).append(": ");
+                sb.append(formatValue(value, depth + 1)).append("\n");
+            } catch (IllegalAccessException ignored) {}
         }
-        return fields;
+
+        sb.append(indent).append("}");
+        return sb.toString();
     }
 
+    // ==========================================
+    // 3. Instruction 전용 tokenize() (파라미터화된 인터페이스 호환)
+    // ==========================================
     @Override
     public List<String> tokenize(boolean includeTag, String delimiter) {
         List<String> tokens = new ArrayList<>();
-        if (includeTag) tokens.add("[" + getTagName() + "]");
-        getFields().forEach((name, value) -> tokens.add(name + delimiter + value));
+        if (includeTag) {
+            tokens.add("[" + getTagName() + "]");
+        }
+        
+        // Mnemonic이 존재하면 첫 번째 토큰 부근에 추가
+        String mnemonic = extractMnemonic();
+        if (mnemonic != null) {
+            tokens.add("mnemonic" + delimiter + mnemonic);
+        }
+
+        // 부모의 공통 리플렉션 토큰화 결과 활용
+        List<String> baseTokens = super.tokenize();
+        for (int i = 1; i < baseTokens.size(); i += 2) {
+            if (i + 1 < baseTokens.size()) {
+                String fieldName = baseTokens.get(i);
+                String fieldValue = baseTokens.get(i + 1);
+                tokens.add(fieldName + delimiter + fieldValue);
+            }
+        }
+        
         return tokens;
     }
 
-    @Override
-    public String toCustomString() {
-        Map<String, String> fields = getFields();
-        String opcodeHex = fields.get("format");
-        String mnemonic = OpcodeTable.OPCODE_NAME_MAP.getOrDefault(
-            opcodeHex.substring(0,2), "unknown"
-        );
-
-        StringBuilder sb = new StringBuilder();
-        sb.append("<Start Entry>");
-        sb.append("<Start>--- mnenonic:").append(mnemonic).append("<End>\n");
-        sb.append("<Start>hex:").append(opcodeHex).append("<End>\n");
-
-        fields.forEach((name, value) -> {
-            if (!name.equals("format")) {
-                sb.append("<Start>").append(name).append(":").append(value).append("<End>\n");
+    // ==========================================
+    // 도우미 메서드: format 필드에서 Opcode Mnemonic 추출
+    // ==========================================
+    private String extractMnemonic() {
+        try {
+            Field formatField = getClass().getDeclaredField("format");
+            formatField.setAccessible(true);
+            Object value = formatField.get(this);
+            
+            if (value instanceof byte[]) {
+                byte[] bytes = (byte[]) value;
+                if (bytes.length > 0) {
+                    String opcodeHex = String.format("%02X", bytes[0]);
+                    return OpcodeTable.OPCODE_NAME_MAP.getOrDefault(opcodeHex, "unknown");
+                }
+            } else if (value != null) {
+                String hex = value.toString();
+                if (hex.length() >= 2) {
+                    return OpcodeTable.OPCODE_NAME_MAP.getOrDefault(hex.substring(0, 2), "unknown");
+                }
             }
-        });
-        sb.append("<End Entry>\n");
-
-        return sb.toString();
-    }
-
-
-    @Override
-    public String toString() {
-        return toCustomString();
-    }
-
-    private static String bytesToHex(byte[] bytes) {
-        StringBuilder sb = new StringBuilder();
-        for (byte b : bytes) sb.append(String.format("%02X", b));
-        return sb.toString();
+        } catch (NoSuchFieldException | IllegalAccessException ignored) {
+            // format 필드가 없는 명령어 객체는 무시
+        }
+        return null;
     }
 }

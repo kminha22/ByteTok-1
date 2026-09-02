@@ -7,10 +7,8 @@ import hgu.isel.structure.field.FieldInformation;
 import hgu.isel.structure.interfaces.Interfaces;
 import hgu.isel.structure.method.MethodInformation;
 
-import java.nio.charset.StandardCharsets;
 import java.nio.file.StandardOpenOption;
 import java.io.File;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -105,7 +103,7 @@ public class ByteTokenizer {
 
         for(int i = 0; i < byteStructure.getConstantPoolInformation().length; i++) {
             if(byteStructure.getConstantPoolInformation()[i] != null) {
-                constantPools.addAll(byteStructure.getConstantPoolInformation()[i].tokenize(i + 1));
+                constantPools.addAll(byteStructure.getConstantPoolInformation()[i].tokenize());
             }
         }
 
@@ -206,7 +204,7 @@ public class ByteTokenizer {
 
         for(int i = 0; i < byteStructure.getConstantPoolInformation().length; i++) {
             if(byteStructure.getConstantPoolInformation()[i] != null) {
-                constantPools.addAll(byteStructure.getConstantPoolInformation()[i].tokenize(i + 1));
+                constantPools.addAll(byteStructure.getConstantPoolInformation()[i].tokenize());
             }
         }
 
@@ -265,7 +263,7 @@ public class ByteTokenizer {
         // tokenize constant pool
         for(int i = 0; i < byteStructure.getConstantPoolInformation().length; i++) {
             if(byteStructure.getConstantPoolInformation()[i] != null) {
-                inputs.addAll(byteStructure.getConstantPoolInformation()[i].tokenize(i + 1));
+                inputs.addAll(byteStructure.getConstantPoolInformation()[i].tokenize());
             }
         }
 
@@ -380,7 +378,7 @@ public class ByteTokenizer {
 
         for(int i = 0; i < byteStructure.getConstantPoolInformation().length; i++) {
             if(byteStructure.getConstantPoolInformation()[i] != null) {
-                inputs.addAll(byteStructure.getConstantPoolInformation()[i].tokenize(i + 1));
+                inputs.addAll(byteStructure.getConstantPoolInformation()[i].tokenize());
             }
         }
 

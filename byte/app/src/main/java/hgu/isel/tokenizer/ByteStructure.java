@@ -1,13 +1,9 @@
 package hgu.isel.tokenizer;
 
-import java.nio.charset.StandardCharsets;
-
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
-
+import hgu.isel.structure.BaseBytecodeStructure;
 import hgu.isel.structure.attribute.AttributeInformation;
 import hgu.isel.structure.constant.ConstantPoolInformation;
-import hgu.isel.structure.constant.type.UTF8Information;
+
 import hgu.isel.structure.field.FieldInformation;
 import hgu.isel.structure.interfaces.Interfaces;
 import hgu.isel.structure.method.MethodInformation;
@@ -18,7 +14,7 @@ import hgu.isel.structure.method.MethodInformation;
  * <p>
  * All getters and setters in this class are simple property accessors with no side effects.
  */
-public class ByteStructure {
+public class ByteStructure extends BaseBytecodeStructure {
     private String fileName;
     private byte[] magic;
     private byte[] minorVersion;
