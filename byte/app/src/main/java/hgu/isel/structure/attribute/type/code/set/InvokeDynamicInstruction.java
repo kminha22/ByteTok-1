@@ -19,7 +19,7 @@ public class InvokeDynamicInstruction extends AbstractInstruction {
     public InvokeDynamicInstruction(byte format, byte indexByte1, byte indexByte2) {
         this.format = format;
         this.constant_pool_index_1 = indexByte1;
-        this.constant_pool_index_1 = indexByte2;
+        this.constant_pool_index_2 = indexByte2;
     }
 
 }
