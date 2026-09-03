@@ -7,6 +7,14 @@ import hgu.isel.structure.constant.ConstantPoolInformation;
 import hgu.isel.structure.field.FieldInformation;
 import hgu.isel.structure.interfaces.Interfaces;
 import hgu.isel.structure.method.MethodInformation;
+import java.lang.reflect.Field;
+import java.util.List;
+
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonNull;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonPrimitive;
 
 /**
  * This class represents the entire structure of the input bytecodes.
@@ -32,6 +40,26 @@ public class ByteStructure extends BaseBytecodeStructure {
     private MethodInformation[] methodInformation;
     private byte[] attributesCount;
     private AttributeInformation[] attributeInformation;
+
+    @Override
+    public JsonElement toJson() {
+        // 부모(BaseBytecodeStructure)의 기본 리플렉션 기반 toJson() 호출
+        JsonObject originalJson = (JsonObject) super.toJson();
+        JsonObject resultJson = new JsonObject();
+
+        // 1. 하위에 ErrorAttribute가 존재하는지 체크하여 최상단에 "error": true 추가
+        if (hasErrorAttribute()) { 
+            resultJson.addProperty("error", true);
+        }
+
+        // 2. 기존 originalJson의 키-값들을 순서대로 복사
+        originalJson.entrySet().forEach(entry -> {
+            resultJson.add(entry.getKey(), entry.getValue());
+        });
+
+        return resultJson;
+    }
+
 
     public byte[] getMagic() {
         return magic;

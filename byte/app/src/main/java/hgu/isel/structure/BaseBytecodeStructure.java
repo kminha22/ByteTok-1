@@ -12,6 +12,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import hgu.isel.structure.attribute.type.ErrorAttribute;
+
 public abstract class BaseBytecodeStructure implements JsonSerializable {
 
     // ==========================================
@@ -278,4 +280,72 @@ public abstract class BaseBytecodeStructure implements JsonSerializable {
         }
         return sb.toString();
     }
+
+    public boolean hasErrorAttribute() {
+    // 1. 자기 자신이 ErrorAttribute 클래스이거나 이름에 ErrorAttribute가 들어가는 경우
+    if (this instanceof ErrorAttribute || getClass().getSimpleName().contains("ErrorAttribute")) {
+        return true;
+    }
+
+    // 2. 클래스 상속 구조의 모든 필드 탐색 (부모 클래스의 필드 포함)
+    Class<?> clazz = getClass();
+    while (clazz != null && clazz != Object.class) {
+        for (Field field : clazz.getDeclaredFields()) {
+            if (java.lang.reflect.Modifier.isStatic(field.getModifiers())) continue;
+            field.setAccessible(true);
+
+            try {
+                Object value = field.get(this);
+                if (value == null) continue;
+
+                // A. 단일 객체 탐색
+                if (checkError(value)) {
+                    return true;
+                }
+
+                // B. 배열 타입 탐색 (Object[] 및 primitive 대응)
+                if (value.getClass().isArray()) {
+                    int length = java.lang.reflect.Array.getLength(value);
+                    for (int i = 0; i < length; i++) {
+                        Object item = java.lang.reflect.Array.get(value, i);
+                        if (checkError(item)) {
+                            return true;
+                        }
+                    }
+                }
+
+                // C. Collection (List 등) 탐색
+                if (value instanceof Iterable) {
+                    for (Object item : (Iterable<?>) value) {
+                        if (checkError(item)) {
+                            return true;
+                        }
+                    }
+                }
+
+            } catch (IllegalAccessException ignored) {}
+        }
+        clazz = clazz.getSuperclass(); // 부모 클래스의 private 필드까지 추적
+    }
+
+    return false;
+}
+
+// 하위 요소가 ErrorAttribute인지 재귀적으로 검사하는 헬퍼 메서드
+private boolean checkError(Object element) {
+    if (element == null) return false;
+
+    // Element 자체가 ErrorAttribute인 경우
+    if (element instanceof ErrorAttribute || element.getClass().getSimpleName().contains("ErrorAttribute")) {
+        return true;
+    }
+
+    // Element가 BaseBytecodeStructure를 상속받은 경우 재귀 호출
+    if (element instanceof BaseBytecodeStructure) {
+        return ((BaseBytecodeStructure) element).hasErrorAttribute();
+    }
+
+    return false;
+}
+
 }
