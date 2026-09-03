@@ -55,13 +55,13 @@ public abstract class AbstractInstruction extends BaseBytecodeStructure implemen
     }
 
     @Override
-    protected String toStringWithIndent(int depth) {
+    public String toStringWithIndent(int depth) {
         StringBuilder indent = new StringBuilder("  ".repeat(depth));
         StringBuilder sb = new StringBuilder();
-        
+
         String mnemonic = extractMnemonic();
         sb.append(getClass().getSimpleName());
-        if (mnemonic != null) {
+        if (!"unknown".equals(mnemonic)) {
             sb.append(" (").append(mnemonic).append(")");
         }
         sb.append(" {\n");
@@ -74,7 +74,7 @@ public abstract class AbstractInstruction extends BaseBytecodeStructure implemen
                 if (value == null) continue;
 
                 sb.append(indent).append("  ").append(field.getName()).append(": ");
-                sb.append(formatValue(value, depth + 1)).append("\n");
+                sb.append(formatValue(field, value, depth + 1)).append("\n");
             } catch (IllegalAccessException ignored) {}
         }
 

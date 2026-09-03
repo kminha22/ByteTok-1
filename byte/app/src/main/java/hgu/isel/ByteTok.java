@@ -63,30 +63,47 @@ public class ByteTok {
                 
                 saveJson(classFile, outDir);
 
-            } else if (cmd.hasOption("jd")) {
-               
-                String[] tokenizeArgs = cmd.getOptionValues("jd");
+            } else if (cmd.hasOption("m")) {
+                String[] tokenizeArgs = cmd.getOptionValues("m");
                 String classListFile = tokenizeArgs[0];
                 String outDir = tokenizeArgs[1];
 
-                try (BufferedReader br = new BufferedReader(new FileReader(classListFile))) {
-                    String line;
-                    while ((line = br.readLine()) != null) {
+                try {
+                    // 1. 파일 목록 전체 읽기
+                    List<String> classFiles = Files.readAllLines(Paths.get(classListFile));
+
+                    // 2. parallelStream()을 이용해 멀티스레드 병렬 처리
+                    classFiles.parallelStream().forEach(line -> {
                         String classFile = line.trim();
-                        String base = new File(classFile).getName().replace(".class", "");
-                        File jsonFile = new File(outDir, base + ".json");
+                        if (classFile.isEmpty()) return;
 
-                        // 이미 JSON이 있으면 건너뛰기
-                        if (jsonFile.exists()) {
-                            continue;
+                        try {
+                            // 원본 파일명을 패키지 구분의 점(.) 형태나 상위 경로 형태로 변환
+                            String normalizedPath = classFile.replace("\\", "/");
+                            String relativePath = normalizedPath.contains("resources/") 
+                                    ? normalizedPath.substring(normalizedPath.lastIndexOf("resources/") + 10)
+                                    : Paths.get(classFile).getFileName().toString();
+
+                            // 패키지 경로를 살려서 파일명 생성 (예: com.example.Main.json)
+                            String jsonFileName = relativePath.replace("/", ".").replace(".class", ".json");
+
+                            File jsonFile = new File(outDir, jsonFileName);
+
+                            // 이미 존재하면 스킵
+                            if (jsonFile.exists()) {
+                                return;
+                            }
+
+                            saveJson(classFile, outDir);
+
+                        } catch (Exception e) {
+                            System.err.println("Error processing file: " + classFile + " - " + e.getMessage());
                         }
+                    });
 
-                        saveJson(classFile, outDir);
-                    }
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
-
             } else if(cmd.hasOption("r")) {
 
                 String[] removeArgs = cmd.getOptionValues("r");
@@ -207,9 +224,9 @@ public class ByteTok {
         byteTokenizer.createVocabulary(vocabPath);
     }
 
+
     private void analyze(String path) {
         ByteReader byteReader = new ByteReader(path);
-
         byte[] bytes = byteReader.readClassFile();
 
         ByteAnalyzer byteAnalyzer = new ByteAnalyzer(bytes);
@@ -217,6 +234,11 @@ public class ByteTok {
         try {
             byteStructure = byteAnalyzer.analyze();
             String resultText = byteStructure.toString();
+
+            // ★ 바이너리 파일 인식 방지: NULL 문자(\0) 특수문자 제거
+            if (resultText != null) {
+                resultText = resultText.replace("\0", "");
+            }
 
             String normalizedPath = path.replace("\\", "/"); 
             String key = "resources/";
@@ -236,9 +258,9 @@ public class ByteTok {
             Path outputPath = outputDir.resolve(txtFileName);
 
             Files.write(outputPath,
-                        resultText.getBytes(StandardCharsets.UTF_8),
-                        StandardOpenOption.CREATE,
-                        StandardOpenOption.TRUNCATE_EXISTING);
+                    resultText.getBytes(StandardCharsets.UTF_8),
+                    StandardOpenOption.CREATE,
+                    StandardOpenOption.TRUNCATE_EXISTING);
 
             if (Files.exists(outputPath)) {
                 System.out.println("File saved : " + outputPath.toAbsolutePath());

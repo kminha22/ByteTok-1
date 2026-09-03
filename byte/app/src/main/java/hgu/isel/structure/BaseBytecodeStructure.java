@@ -73,9 +73,11 @@ public abstract class BaseBytecodeStructure implements JsonSerializable {
         return toStringWithIndent(0);
     }
 
-    protected String toStringWithIndent(int depth) {
+    // ByteStructure 또는 ConstantPoolInformation 목록을 가진 최상위 클래스의 toStringWithIndent 오버라이딩
+    public String toStringWithIndent(int depth) {
         StringBuilder indent = new StringBuilder("  ".repeat(depth));
         StringBuilder sb = new StringBuilder();
+
         sb.append(getClass().getSimpleName()).append(" {\n");
 
         for (Field field : getClass().getDeclaredFields()) {
@@ -85,13 +87,31 @@ public abstract class BaseBytecodeStructure implements JsonSerializable {
                 Object value = field.get(this);
                 if (value == null) continue;
 
-                String fieldName = field.getName();
-                sb.append(indent).append("  ").append(fieldName).append(": ");
-                sb.append(formatValue(value, depth + 1)).append("\n");
-
-                if (value instanceof byte[] && ("bytes".equals(fieldName) || "UTF8Information".equals(getClass().getSimpleName()))) {
-                    String decoded = new String((byte[]) value, StandardCharsets.UTF_8);
-                    sb.append(indent).append("  ").append("--- Decoded String: ").append(decoded).append("\n");
+                // 상수 풀 배열인 경우 #1, #2... 인덱스 번호 부여
+                if ("constantPoolInformation".equals(field.getName()) && value instanceof Object[]) {
+                    sb.append(indent).append("  constantPoolInformation: [\n");
+                    Object[] cpArray = (Object[]) value;
+                    
+                    for (int i = 0; i < cpArray.length; i++) {
+                        Object item = cpArray[i];
+                        if (item == null) continue;
+                        
+                        // #1, #2 형태의 CP 번호 추가
+                        int cpIndex = i + 1; 
+                        sb.append(indent).append("    #").append(cpIndex).append(" ");
+                        
+                        if (item instanceof BaseBytecodeStructure) {
+                            sb.append(((BaseBytecodeStructure) item).toStringWithIndent(depth + 2));
+                        } else {
+                            sb.append(item);
+                        }
+                        if (i < cpArray.length - 1) sb.append(",");
+                        sb.append("\n");
+                    }
+                    sb.append(indent).append("  ]\n");
+                } else {
+                    sb.append(indent).append("  ").append(field.getName()).append(": ");
+                    sb.append(formatValue(field, value, depth + 1)).append("\n");
                 }
             } catch (IllegalAccessException ignored) {}
         }
@@ -100,29 +120,116 @@ public abstract class BaseBytecodeStructure implements JsonSerializable {
         return sb.toString();
     }
 
-    protected String formatValue(Object value, int depth) {
-        if (value instanceof BaseBytecodeStructure) {
-            return ((BaseBytecodeStructure) value).toStringWithIndent(depth);
-        } else if (value instanceof Byte) {
-            return String.format("0x%02X", (Byte) value);
-        } else if (value instanceof byte[]) {
-            return bytesToHex((byte[]) value);
-        } else if (value.getClass().isArray()) {
+    protected String formatValue(Field field, Object value, int depth) {
+        if (value == null) return "null";
+
+        // 1. 객체 배열 처리
+        if (value instanceof Object[]) {
+            Object[] array = (Object[]) value;
+            if (array.length == 0) return "[]";
+
+            StringBuilder indent = new StringBuilder("  ".repeat(depth));
             StringBuilder sb = new StringBuilder("[\n");
-            int length = java.lang.reflect.Array.getLength(value);
-            String childIndent = "  ".repeat(depth + 1);
-            for (int i = 0; i < length; i++) {
-                Object elem = java.lang.reflect.Array.get(value, i);
-                sb.append(childIndent).append(formatValue(elem, depth + 1));
-                if (i < length - 1) sb.append(",");
+
+            for (int i = 0; i < array.length; i++) {
+                Object item = array[i];
+                sb.append(indent);
+                if (item instanceof BaseBytecodeStructure) {
+                    sb.append(((BaseBytecodeStructure) item).toStringWithIndent(depth));
+                } else {
+                    sb.append(item);
+                }
+                if (i < array.length - 1) sb.append(",");
                 sb.append("\n");
             }
-            sb.append("  ".repeat(depth)).append("]");
+            sb.append(indent).append("]");
             return sb.toString();
-        } else {
-            return String.valueOf(value);
         }
+
+        // 2. 리스트 처리
+        if (value instanceof List) {
+            List<?> list = (List<?>) value;
+            if (list.isEmpty()) return "[]";
+
+            StringBuilder indent = new StringBuilder("  ".repeat(depth));
+            StringBuilder sb = new StringBuilder("[\n");
+
+            for (int i = 0; i < list.size(); i++) {
+                Object item = list.get(i);
+                sb.append(indent);
+                if (item instanceof BaseBytecodeStructure) {
+                    sb.append(((BaseBytecodeStructure) item).toStringWithIndent(depth));
+                } else {
+                    sb.append(item);
+                }
+                if (i < list.size() - 1) sb.append(",");
+                sb.append("\n");
+            }
+            sb.append(indent).append("]");
+            return sb.toString();
+        }
+
+        // 3. 하위 구조체 처리
+        if (value instanceof BaseBytecodeStructure) {
+            return ((BaseBytecodeStructure) value).toStringWithIndent(depth);
+        }
+
+        // 4. 바이트 배열 처리 (UTF8 디코딩)
+        if (value instanceof byte[]) {
+            byte[] bytes = (byte[]) value;
+            String hex = bytesToHex(bytes);
+
+            // UTF8Information의 bytes 필드 디코딩
+            if ("bytes".equals(field.getName()) && "UTF8Information".equals(getClass().getSimpleName())) {
+                String decoded = new String(bytes, StandardCharsets.UTF_8);
+                return hex + "\n" + "  ".repeat(depth) + "--- Decoded String: " + decoded;
+            }
+            return hex;
+        }
+
+        // 5. 단일 Byte 처리 (index, length, size, count, offset 지원)
+        if (value instanceof Byte) {
+            byte b = (Byte) value;
+            int unsignedVal = Byte.toUnsignedInt(b);
+            String hex = String.format("0x%02X", b);
+
+            String fieldNameLower = field.getName().toLowerCase();
+            
+            // CP 참조 인덱스인 경우 #10 형식
+            if (fieldNameLower.contains("index")) {
+                return hex + " (#" + unsignedVal + ")";
+            }
+            // length, size, count, offset, max, stack, local 등의 크기/위치 필드인 경우 (10) 형식
+            if (fieldNameLower.contains("length") || fieldNameLower.contains("size") 
+                    || fieldNameLower.contains("count") || fieldNameLower.contains("offset")
+                    || fieldNameLower.contains("max") || fieldNameLower.contains("stack") 
+                    || fieldNameLower.contains("local")) {
+                return hex + " (" + unsignedVal + ")";
+            }
+            return hex;
+        }
+
+        // 6. short, int, long, byte[] 등 수치형 필드 처리 (2~4바이트 포맷 대비)
+        if (value instanceof Number) {
+            long val = ((Number) value).longValue();
+            String fieldNameLower = field.getName().toLowerCase();
+
+            // CP 참조 인덱스인 경우
+            if (fieldNameLower.contains("index")) {
+                return String.format("0x%04X (#%d)", val, val);
+            }
+            // length, size, count, offset 등 수치/크기 필드인 경우
+            if (fieldNameLower.contains("length") || fieldNameLower.contains("size") 
+                    || fieldNameLower.contains("count") || fieldNameLower.contains("offset")
+                    || fieldNameLower.contains("max") || fieldNameLower.contains("stack") 
+                    || fieldNameLower.contains("local")) {
+                return String.format("%04X (%d)", val, val);
+            }
+        }
+
+        return String.valueOf(value);
     }
+        
 
     protected JsonElement convertToJsonElement(Object value) {
         if (value == null) return JsonNull.INSTANCE;

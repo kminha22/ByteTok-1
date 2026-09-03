@@ -1,6 +1,6 @@
 #!/bin/bash
 CLASSLIST_DIR=/data2/minha/data/classlist
-NPROC=10   # 동시에 실행할 프로세스 개수 제한
+NPROC=1   # 동시에 실행할 프로세스 개수 제한
 
 for part in "$CLASSLIST_DIR"/*; do
   ./run_proc.sh "$part" &

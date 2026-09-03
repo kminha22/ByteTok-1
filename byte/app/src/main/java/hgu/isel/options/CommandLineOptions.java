@@ -25,7 +25,13 @@ public class CommandLineOptions {
         Option json = Option.builder("j")
                 .longOpt("json")
                 .hasArgs() 
-                .desc("Save JSON output of Code attribute / 1) input path")
+                .desc("Save JSON output of Code attribute / 1) input path 2) output path")
+                .build();
+
+        Option multi = Option.builder("m")
+                .longOpt("multi")
+                .hasArgs() 
+                .desc("Save multiple JSON outputs from class path file / 1) class path file path 2) output path")
                 .build();
 
         Option remove = Option.builder("r")
@@ -74,6 +80,7 @@ public class CommandLineOptions {
         options.addOption(vocab);
         options.addOption(tokenize);
         options.addOption(json);
+        options.addOption(multi);
         options.addOption(remove);
         options.addOption(generate);
         options.addOption(delete);
