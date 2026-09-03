@@ -11,15 +11,13 @@ import hgu.isel.structure.attribute.type.code.AbstractInstruction;
  */
 public class InvokeInterfaceInstruction extends AbstractInstruction {
     private byte format;
-    private byte constant_pool_index_1;
-    private byte constant_pool_index_2;
-    private byte immediate_value_count;
+    private byte[] constant_pool_index;
+    private byte immediate_value;
     private final byte ignore = 0;
 
     public InvokeInterfaceInstruction(byte format, byte indexByte1, byte indexByte2, byte count) {
         this.format = format;
-        this.constant_pool_index_1 = indexByte1;
-        this.constant_pool_index_2 = indexByte2;
-        this.immediate_value_count = count;
+        this.constant_pool_index = new byte[] { indexByte1, indexByte2 };
+        this.immediate_value = count;
     }
 }

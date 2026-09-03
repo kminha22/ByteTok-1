@@ -11,10 +11,10 @@ import hgu.isel.structure.attribute.type.code.AbstractInstruction;
  */
 public class PushByteInstruction extends AbstractInstruction {
     private byte format;
-    private byte immediate_value_byte;
+    private byte immediate_value;
 
     public PushByteInstruction(byte format, byte pushedByte) {
         this.format = format;
-        this.immediate_value_byte = pushedByte;
+        this.immediate_value = pushedByte;
     }
 }

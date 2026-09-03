@@ -174,58 +174,68 @@ public abstract class BaseBytecodeStructure implements JsonSerializable {
             return ((BaseBytecodeStructure) value).toStringWithIndent(depth);
         }
 
-        // 4. 바이트 배열 처리 (UTF8 디코딩)
+        // 4. 바이트 배열 처리 (byte[])
         if (value instanceof byte[]) {
             byte[] bytes = (byte[]) value;
             String hex = bytesToHex(bytes);
+            String fieldNameLower = field.getName().toLowerCase();
 
             // UTF8Information의 bytes 필드 디코딩
             if ("bytes".equals(field.getName()) && "UTF8Information".equals(getClass().getSimpleName())) {
                 String decoded = new String(bytes, StandardCharsets.UTF_8);
                 return hex + "\n" + "  ".repeat(depth) + "--- Decoded String: " + decoded;
             }
+
+            if (bytes.length > 0 && bytes.length <= 8) {
+                long numericVal = 0;
+                for (byte b : bytes) {
+                    numericVal = (numericVal << 8) | (b & 0xFF);
+                }
+
+                // 2) CP 참조 인덱스인 경우 -> (#X)
+                if (fieldNameLower.contains("index")) {
+                    return hex + " (#" + numericVal + ")";
+                }
+
+                // 3) length, size, count 등 크기/수치 필드인 경우 -> (X)
+                if (fieldNameLower.contains("length") || fieldNameLower.contains("size") 
+                        || fieldNameLower.contains("count") || fieldNameLower.contains("offset")
+                        || fieldNameLower.contains("max") || fieldNameLower.contains("stack") 
+                        || fieldNameLower.contains("code")|| fieldNameLower.contains("pc")|| fieldNameLower.contains("number")) {
+                    return hex + " (" + numericVal + ")";
+                }
+            }
+
             return hex;
         }
 
-        // 5. 단일 Byte 처리 (index, length, size, count, offset 지원)
+        // 5. 단일 Byte 처리
         if (value instanceof Byte) {
             byte b = (Byte) value;
             int unsignedVal = Byte.toUnsignedInt(b);
             String hex = String.format("0x%02X", b);
-
             String fieldNameLower = field.getName().toLowerCase();
-            
-            // CP 참조 인덱스인 경우 #10 형식
+
+            // 1) local 변수/슬롯인 경우 -> (slot X)
+            if (fieldNameLower.contains("local") 
+                        && !fieldNameLower.contains("max") && !fieldNameLower.contains("length")) {
+                return hex + " (slot " + unsignedVal + ")";
+            }
+
+            // 2) CP 참조 인덱스인 경우 -> (#X)
             if (fieldNameLower.contains("index")) {
                 return hex + " (#" + unsignedVal + ")";
             }
-            // length, size, count, offset, max, stack, local 등의 크기/위치 필드인 경우 (10) 형식
+
+            // 3) 크기/수치 필드인 경우 -> (X)
             if (fieldNameLower.contains("length") || fieldNameLower.contains("size") 
                     || fieldNameLower.contains("count") || fieldNameLower.contains("offset")
-                    || fieldNameLower.contains("max") || fieldNameLower.contains("stack") 
-                    || fieldNameLower.contains("local")) {
+                    || fieldNameLower.contains("max") || fieldNameLower.contains("stack")) {
                 return hex + " (" + unsignedVal + ")";
             }
             return hex;
         }
 
-        // 6. short, int, long, byte[] 등 수치형 필드 처리 (2~4바이트 포맷 대비)
-        if (value instanceof Number) {
-            long val = ((Number) value).longValue();
-            String fieldNameLower = field.getName().toLowerCase();
-
-            // CP 참조 인덱스인 경우
-            if (fieldNameLower.contains("index")) {
-                return String.format("0x%04X (#%d)", val, val);
-            }
-            // length, size, count, offset 등 수치/크기 필드인 경우
-            if (fieldNameLower.contains("length") || fieldNameLower.contains("size") 
-                    || fieldNameLower.contains("count") || fieldNameLower.contains("offset")
-                    || fieldNameLower.contains("max") || fieldNameLower.contains("stack") 
-                    || fieldNameLower.contains("local")) {
-                return String.format("%04X (%d)", val, val);
-            }
-        }
 
         return String.valueOf(value);
     }

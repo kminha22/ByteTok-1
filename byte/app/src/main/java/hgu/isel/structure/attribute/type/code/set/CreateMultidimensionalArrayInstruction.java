@@ -10,14 +10,12 @@ import hgu.isel.structure.attribute.type.code.AbstractInstruction;
  */
 public class CreateMultidimensionalArrayInstruction extends AbstractInstruction {
     private byte format;
-    private byte constant_pool_index_1;
-    private byte constant_pool_index_2;
-    private byte immediate_value_dimensions;
+    private byte[] constant_pool_index;
+    private byte immediate_value;
 
     public CreateMultidimensionalArrayInstruction(byte format, byte indexByte1, byte indexByte2, byte dimensions) {
         this.format = format;
-        this.constant_pool_index_1 = indexByte1;
-        this.constant_pool_index_2 = indexByte2;
-        this.immediate_value_dimensions = dimensions;
+        this.constant_pool_index = new byte[] { indexByte1, indexByte2 };
+        this.immediate_value = dimensions;
     }
 }

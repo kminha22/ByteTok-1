@@ -11,12 +11,10 @@ import hgu.isel.structure.attribute.type.code.AbstractInstruction;
  */
 public class BranchIfIntComparisonSucceedsInstruction extends AbstractInstruction {
     private byte format;
-    private byte jump_offset_1;
-    private byte jump_offset_2;
+    private byte[] jump_offset;
 
     public BranchIfIntComparisonSucceedsInstruction(byte format, byte branchByte1, byte branchByte2) {
         this.format = format;
-        this.jump_offset_1 = branchByte1;
-        this.jump_offset_2 = branchByte2;
+        this.jump_offset = new byte[] { branchByte1, branchByte2 };
     }
 }

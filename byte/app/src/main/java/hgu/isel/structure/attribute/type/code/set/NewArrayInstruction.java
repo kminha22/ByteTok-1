@@ -10,10 +10,10 @@ import hgu.isel.structure.attribute.type.code.AbstractInstruction;
  */
 public class NewArrayInstruction extends AbstractInstruction {
     private byte format;
-    private byte immediate_value_type;
+    private byte immediate_value;
 
     public NewArrayInstruction(byte format, byte type) {
         this.format = format;
-        this.immediate_value_type = type;
+        this.immediate_value = type;
     }
 }

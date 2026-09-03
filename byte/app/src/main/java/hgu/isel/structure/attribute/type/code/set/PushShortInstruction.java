@@ -11,12 +11,10 @@ import hgu.isel.structure.attribute.type.code.AbstractInstruction;
  */
 public class PushShortInstruction extends AbstractInstruction {
     private byte format;
-    private byte immediate_value_byte_1;
-    private byte immediate_value_byte_2;
+    private byte[] immediate_value;
 
     public PushShortInstruction(byte format, byte byte1, byte byte2) {
         this.format = format;
-        this.immediate_value_byte_1 = byte1;
-        this.immediate_value_byte_2 = byte2;
+        this.immediate_value = new byte[] { byte1, byte2 };
     }
 }

@@ -11,17 +11,11 @@ import hgu.isel.structure.attribute.type.code.AbstractInstruction;
  */
 public class JumpSubroutineWideIndexInstruction extends AbstractInstruction {
     private byte format;
-    private byte jump_offset_1;
-    private byte jump_offset_2;
-    private byte jump_offset_3;
-    private byte jump_offset_4;
+    private byte[] jump_offset;
 
     public JumpSubroutineWideIndexInstruction(byte format, byte branchByte1, byte branchByte2, byte branchByte3, byte branchByte4) {
         this.format = format;
-        this.jump_offset_1 = branchByte1;
-        this.jump_offset_2 = branchByte2;
-        this.jump_offset_3 = branchByte3;
-        this.jump_offset_4 = branchByte4;
+        this.jump_offset = new byte[] { branchByte1, branchByte2,  branchByte3, branchByte4 };
     }
 
 }

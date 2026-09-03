@@ -11,15 +11,12 @@ import hgu.isel.structure.attribute.type.code.AbstractInstruction;
  */
 public class InvokeDynamicInstruction extends AbstractInstruction {
     private byte format;
-    private byte constant_pool_index_1;
-    private byte constant_pool_index_2;
-    private final byte ignore_1 = 0;
-    private final byte ignore_2 = 0;
+    private byte[] constant_pool_index;
+    private final byte[] ignore = {0, 0};
 
     public InvokeDynamicInstruction(byte format, byte indexByte1, byte indexByte2) {
         this.format = format;
-        this.constant_pool_index_1 = indexByte1;
-        this.constant_pool_index_2 = indexByte2;
+        this.constant_pool_index = new byte[] { indexByte1, indexByte2 };
     }
 
 }

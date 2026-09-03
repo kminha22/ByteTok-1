@@ -37,9 +37,15 @@ public abstract class AbstractInstruction extends BaseBytecodeStructure implemen
         }
 
         // 기존 필드 중 --- Type을 제외한 나머지 복사
+        // 'format' 키를 발견하면 'opcode' 키명으로 변경하여 추가
         originalJson.entrySet().forEach(entry -> {
-            if (!"--- Type".equals(entry.getKey())) {
-                resultJson.add(entry.getKey(), entry.getValue());
+            String key = entry.getKey();
+            if (!"--- Type".equals(key)) {
+                if ("format".equals(key)) {
+                    resultJson.add("opcode", entry.getValue());
+                } else {
+                    resultJson.add(key, entry.getValue());
+                }
             }
         });
 
@@ -73,7 +79,13 @@ public abstract class AbstractInstruction extends BaseBytecodeStructure implemen
                 Object value = field.get(this);
                 if (value == null) continue;
 
-                sb.append(indent).append("  ").append(field.getName()).append(": ");
+                // 필드명이 'format'인 경우 출력 표기용 이름을 'opcode'로 변경
+                String fieldName = field.getName();
+                if ("format".equals(fieldName)) {
+                    fieldName = "opcode";
+                }
+
+                sb.append(indent).append("  ").append(fieldName).append(": ");
                 sb.append(formatValue(field, value, depth + 1)).append("\n");
             } catch (IllegalAccessException ignored) {}
         }

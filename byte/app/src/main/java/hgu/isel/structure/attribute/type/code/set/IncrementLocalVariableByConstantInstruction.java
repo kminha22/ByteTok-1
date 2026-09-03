@@ -13,11 +13,11 @@ import hgu.isel.structure.attribute.type.code.AbstractInstruction;
 public class IncrementLocalVariableByConstantInstruction extends AbstractInstruction {
     private byte format;
     private byte local_variable_index;
-    private byte immediate_value_const;
+    private byte immediate_value;
 
     public IncrementLocalVariableByConstantInstruction(byte format, byte index, byte constValue) {
         this.format = format;
         this.local_variable_index = index;
-        this.immediate_value_const = constValue;
+        this.immediate_value = constValue;
     }
 }
