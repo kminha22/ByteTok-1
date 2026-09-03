@@ -60,6 +60,27 @@ public class ByteStructure extends BaseBytecodeStructure {
         return resultJson;
     }
 
+    @Override
+    public String toString() {
+        String originalResult = toStringWithIndent(0);
+
+        // ErrorAttribute가 존재하지 않으면 기존 toStringWithIndent 결과 그대로 반환
+        if (!hasErrorAttribute()) {
+            return originalResult;
+        }
+
+        // "ByteStructure {\n" 문구 바로 뒤(첫 번째 개행 다음)에 "  error: true\n" 삽입
+        int firstNewLineIndex = originalResult.indexOf("\n");
+        if (firstNewLineIndex != -1) {
+            return originalResult.substring(0, firstNewLineIndex + 1)
+                    + "  error: true\n"
+                    + originalResult.substring(firstNewLineIndex + 1);
+        }
+
+        // 개행 문자가 없는 예외적인 경우 맨 앞에 붙여서 반환
+        return "error: true\n" + originalResult;
+    }
+
 
     public byte[] getMagic() {
         return magic;
